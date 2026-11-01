@@ -52,5 +52,15 @@ t("Amarettini", "Zucker, Aprikosenkerne, Eiweiß – Amarettini", false, "hinwei
 t("Leer", "", false, "ok");
 t("Umlaut-frei getippt", "kaese aus rohmilch, raeucherlachs", false, "erhitzen", ["rohmilch", "fischroh"]);
 
+// Spurenhinweise dürfen nicht als Zutat zählen
+const haehnchen = "Weizenmehl, zerkleinerte Schältomaten (16%), Käse (12%) (schnittfester Mozzarella, Edamer), mariniertes Hähnchenfleisch, gegart (9,5%) (Hähnchenfleisch [9%], Rapsöl, Salz, Gewürze, Dextrose, Knoblauch), Wasser, Spinat (5%), Paprika (4%), Sauerteig (Wasser, Weizenmehl, Roggenmehl), Vollmilch, Frischkäse Doppelrahmstufe (1%), natives Olivenöl extra (1%), Salz, Zwiebeln (0,5%), Hefe, Weizenquellmehl, Rapsöl, Zucker, Stärke, Malzmehl (Gerste, Weizen), Kräuter, Gewürze, Knoblauch, Stabilisator: Guarkernmehl, Maltodextrin, Weizenstärke, Gewürzextrakt. Kann enthalten: Ei, Fisch, Lupine, Sellerie, Senf und Soja.";
+t("Wagner Hähnchen (echte Daten)", haehnchen, true, "ok", [], ["fisch", "ei", "fischroh"]);
+t("Spuren von …", "Zucker, Kakaobutter, Milchpulver. Kann Spuren von Ei, Fisch und Nüssen enthalten.", false, "ok", [], ["fisch", "ei"]);
+t("Spuren ohne kann", "Zucker, Haselnüsse. Spuren von Erdnüssen, Ei und Fisch.", false, "ok", [], ["fisch", "ei"]);
+t("Enthält möglicherweise", "Reis, Wasser, Salz. Enthält möglicherweise Fisch.", false, "ok", [], ["fisch"]);
+t("Betrieb-Hinweis", "Mehl, Salz. Hergestellt in einem Betrieb, der auch Fisch und Ei verarbeitet.", false, "ok", [], ["fisch", "ei"]);
+t("Echter Fisch + Spurenhinweis", "Lachs geräuchert, Salz. Kann Spuren von Senf enthalten.", false, "erhitzen", ["fischroh"]);
+t("Echtes Ei + Spurenhinweis", "Nudeln (Hartweizengrieß, Eier 20%), Wasser. Kann Spuren von Soja enthalten.", true, "ok", ["ei"]);
+
 console.log(`\n${pass} bestanden, ${fail} fehlgeschlagen`);
 process.exit(fail ? 1 : 0);

@@ -167,8 +167,20 @@
   var ORDER = { ok: 0, hinweis: 1, massvoll: 2, erhitzen: 3, meiden: 4 };
 
   // text: Zutatenliste (+ Produktname). heated: wird vor dem Essen durcherhitzt?
+  // Spurenhinweise ("Kann enthalten: Ei, Fisch …") sind keine Zutaten und werden vor der Prüfung entfernt.
+  var TRACES = [
+    /(?:kann|koennen) (?:auch )?(?:spuren (?:von|an) )?[^.;]*?enthalten\b[^.;]*/g,
+    /(?:kann|koennen) (?:auch )?enthalten:?[^.;]*/g,
+    /(?:kann |koennen )?spuren (?:von|an)[^.;]*/g,
+    /enthaelt moeglicherweise[^.;]*/g,
+    /(?:hergestellt|produziert|verarbeitet) (?:in einem betrieb|auf anlagen|in einem werk)[^.;]*/g,
+    /may contain[^.;]*/g,
+    /allergiehinweis:?[^.;]*/g
+  ];
+  function stripTraces(t) { TRACES.forEach(function (re) { t = t.replace(re, " "); }); return t; }
+
   function analyze(text, heated) {
-    var t = " " + norm(text) + " ";
+    var t = " " + stripTraces(norm(text)) + " ";
     var found = [];
     var ids = {};
     RULES.forEach(function (r) {
@@ -204,7 +216,7 @@
 
   function worse(a, b) { return ORDER[a] >= ORDER[b] ? a : b; }
 
-  var api = { analyze: analyze, norm: norm, RULES: RULES, VERDICTS: VERDICTS, ORDER: ORDER, worse: worse };
+  var api = { analyze: analyze, stripTraces: stripTraces, norm: norm, RULES: RULES, VERDICTS: VERDICTS, ORDER: ORDER, worse: worse };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.SchwangerCheck = api;
 })(this);
