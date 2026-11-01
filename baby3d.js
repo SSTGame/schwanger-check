@@ -41,7 +41,9 @@
 
     // Fruchtblase
     this.world = new T.Group(); s.add(this.world);
-    var bubbleGeo = new T.SphereGeometry(1.3, 64, 48);
+    var bubbleGeo = new T.SphereGeometry(1.3, 72, 54);
+    this.bubbleGeo = bubbleGeo;
+    this.bubbleBase = Float32Array.from(bubbleGeo.attributes.position.array);
     this.bubbleBack = new T.Mesh(bubbleGeo, new T.MeshPhongMaterial({ color: 0xffb7a3, emissive: 0x3a1420, transparent: true, opacity: 0.22, side: T.BackSide, depthWrite: false, shininess: 10 }));
     this.bubbleFront = new T.Mesh(bubbleGeo, new T.MeshPhongMaterial({ color: 0xffd9cc, specular: 0xffffff, shininess: 90, transparent: true, opacity: 0.08, depthWrite: false }));
     this.world.add(this.bubbleBack);
@@ -308,6 +310,7 @@
       var br = 1 + Math.sin(t * 1.6) * 0.006;
       if (this.breathe) { var bs = this.breathe.userData.s || (this.breathe.userData.s = this.breathe.scale.x); this.breathe.scale.setScalar(bs * br); }
       this.dust.rotation.y = t * 0.03;
+      this._wobble(t);
     }
     // sanftes Einblenden nach Wochenwechsel
     if (this.popT) {
@@ -316,6 +319,24 @@
       if (a >= 1) this.popT = 0;
     }
     this.renderer.render(this.scene, this.camera);
+  };
+
+  // Fruchtblase wabert: weiche, langsam wandernde Wellen auf der Oberfläche
+  Baby3D.prototype._wobble = function (t) {
+    var pos = this.bubbleGeo.attributes.position, a = pos.array, b = this.bubbleBase, R = 1.3;
+    for (var i = 0; i < a.length; i += 3) {
+      var x = b[i] / R, y = b[i + 1] / R, z = b[i + 2] / R;
+      var d = 0.012 * Math.sin(2.6 * x + 1.7 * y + t * 0.75)
+            + 0.008 * Math.sin(3.1 * z - 2.2 * x + t * 1.05)
+            + 0.006 * Math.sin(4.3 * y + 1.3 * z - t * 0.6);
+      var f = 1 + d;
+      a[i] = b[i] * f; a[i + 1] = b[i + 1] * f; a[i + 2] = b[i + 2] * f;
+    }
+    pos.needsUpdate = true;
+    this.bubbleGeo.computeVertexNormals();
+    // ganz leichtes Atmen der ganzen Blase
+    var s = 1 + Math.sin(t * 0.55) * 0.012;
+    this.bubbleBack.scale.setScalar(s); this.bubbleFront.scale.setScalar(s);
   };
 
   Baby3D.prototype.start = function () {

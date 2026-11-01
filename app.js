@@ -93,13 +93,23 @@
     [28, "blinzelt"], [28, "träumt"], [31, "dreht den Kopf zum Licht"], [32, "übt Atmen"], [34, "dreht sich in Geburtslage"], [37, "ist bereit für die Geburt"]
   ];
 
+  // "Das Baby" in den Wochentexten durch den Namen ersetzen
+  function personal(t) {
+    var n = settings.babyName;
+    if (!n) return t;
+    return t.replace(/\b[Dd]as Baby\b/g, n).replace(/\bdem Baby\b/g, n).replace(/\bein Baby\b/g, n).replace(/\bdes Babys\b/g, "von " + n).replace(/\b(Viele|Wenige|Nur wenige) Babys\b/g, "$1 Babys");
+  }
+
   var viewWeek = null, baby = null;
   function shownWeek() { return viewWeek || Math.max(4, currentWeek() || 12); }
 
   function renderWeek() {
     var w = currentWeek(), d = pregDay();
     var h = new Date().getHours();
-    $("greet").textContent = (h < 11 ? "Guten Morgen" : h < 18 ? "Hallo" : "Guten Abend") + (w ? " · " + trimester(w) + ". Trimester" : "");
+    var hi = h < 11 ? "Guten Morgen" : h < 18 ? "Schönen Tag" : "Guten Abend";
+    $("greet").textContent = hi + (w ? " · " + trimester(w) + ". Trimester" : "");
+    $("homeTitle").textContent = settings.name ? "Hallo " + settings.name : "Schwanger-Check";
+    $("meName").value = settings.name || ""; $("meBaby").value = settings.babyName || "";
     $("weekPill").textContent = d != null ? sswText(Math.max(0, d)) : "Termin eintragen";
     $("meWeek").textContent = w || "–";
     $("meTri").textContent = d != null ? sswText(Math.max(0, d)) + " · " + trimester(w) + ". Trimester" : "Noch nicht eingetragen";
@@ -120,7 +130,10 @@
     $("stFruit").textContent = info.fruit;
     $("fbEmoji").textContent = info.emoji;
     $("devLabel").textContent = (viewWeek && viewWeek !== cw) ? "In Woche " + info.week : "Diese Woche";
-    $("devText").textContent = info.text;
+    $("devText").textContent = personal(info.text);
+    $("skillsLabel").textContent = "Das kann " + (settings.babyName || "dein Baby") + " schon";
+    $("dueLabel").textContent = settings.babyName ? "Bis " + settings.babyName + " kommt" : "Bis zum ET";
+    $("stage").setAttribute("aria-label", "3D-Darstellung von " + (settings.babyName || "deinem Baby") + " in Woche " + info.week);
     var ul = $("skills"); ul.innerHTML = "";
     var have = SKILLS.filter(function (x) { return x[0] <= info.week; });
     if (!have.length) ul.appendChild(el("li", { text: "wächst und wächst" }));
@@ -146,7 +159,7 @@
     if (left > 0) {
       var wk = Math.floor(left / 7), dd = left % 7;
       txt = (wk ? wk + (wk === 1 ? " Woche" : " Wochen") : "") + (wk && dd ? " und " : "") + (dd ? dd + (dd === 1 ? " Tag" : " Tage") : "");
-      $("dueSub").textContent = "Tag " + Math.max(0, d) + " von 280 · " + sswText(Math.max(0, d)) + " · noch " + left + (left === 1 ? " Tag" : " Tage");
+      $("dueSub").textContent = "Tag " + Math.max(0, d) + " von 280 · " + sswText(Math.max(0, d)) + " · noch " + left + (left === 1 ? " Tag" : " Tage") + (settings.babyName ? ", bis du " + settings.babyName + " im Arm hältst" : "");
     } else if (left === 0) {
       txt = "Heute ist der ET!"; $("dueSub").textContent = "Alles Gute für die Geburt.";
     } else {
@@ -161,6 +174,12 @@
   $("weekPill").addEventListener("click", function () { go("me"); });
   $("meMinus").addEventListener("click", function () { shiftWeek(-1); });
   $("mePlus").addEventListener("click", function () { shiftWeek(1); });
+  function saveNames() {
+    settings.name = $("meName").value.trim().slice(0, 30); settings.babyName = $("meBaby").value.trim().slice(0, 30); settings.namesAsked = true;
+    store("sc.settings", settings); renderWeek();
+  }
+  $("meName").addEventListener("change", function () { saveNames(); toast("Gespeichert"); });
+  $("meBaby").addEventListener("change", function () { saveNames(); toast("Gespeichert"); });
   $("meDue").addEventListener("change", function () { if (this.value) { setDue(this.value); toast("Termin gespeichert"); } });
   $("wkPrev").addEventListener("click", function () { viewWeek = Math.max(window.SSW.MIN, shownWeek() - 1); renderBaby(); });
   $("wkNext").addEventListener("click", function () { viewWeek = Math.min(window.SSW.MAX, shownWeek() + 1); renderBaby(); });
@@ -726,28 +745,49 @@
   });
 
   /* ---------- Onboarding ---------- */
-  function onboarding() {
-    var step = 0;
+  function onboarding(only) {
+    // Schritte: welcome, names, due, scan. "only" zeigt nur die angegebenen Schritte (z. B. nach einem Update).
+    var STEPS = only || ["welcome", "names", "due", "scan"];
+    var idx = 0, step;
     var layer = $("onb"), ob = $("onbBody");
     layer.hidden = false; document.body.style.overflow = "hidden";
-    var ART = [
-      '<svg width="120" height="120" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><circle cx="60" cy="60" r="42"/><path d="M40 61l14 14 27-29"/></svg>',
-      '<svg width="120" height="120" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><rect x="24" y="28" width="72" height="68" rx="12"/><path d="M24 48h72M44 20v16M76 20v16"/><path d="M48 70l8 8 16-16"/></svg>',
-      '<svg width="120" height="120" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M22 40V28a6 6 0 0 1 6-6h12M80 22h12a6 6 0 0 1 6 6v12M98 80v12a6 6 0 0 1-6 6H80M40 98H28a6 6 0 0 1-6-6V80"/><path d="M40 44v32M50 44v32M62 44v32M72 44v32M82 44v32"/></svg>'
-    ];
-    function dots() { return el("div", { class: "dots", "aria-hidden": "true" }, [0, 1, 2].map(function (i) { return el("i", { class: i === step ? "on" : "" }); })); }
+    var ARTS = {
+      welcome: '<svg width="120" height="120" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><circle cx="60" cy="60" r="42"/><path d="M40 61l14 14 27-29"/></svg>',
+      names: '<svg width="120" height="120" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M60 96S20 72 20 44a20 20 0 0 1 40-6 20 20 0 0 1 40 6c0 28-40 52-40 52z"/></svg>',
+      due: '<svg width="120" height="120" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><rect x="24" y="28" width="72" height="68" rx="12"/><path d="M24 48h72M44 20v16M76 20v16"/><path d="M48 70l8 8 16-16"/></svg>',
+      scan: '<svg width="120" height="120" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M22 40V28a6 6 0 0 1 6-6h12M80 22h12a6 6 0 0 1 6 6v12M98 80v12a6 6 0 0 1-6 6H80M40 98H28a6 6 0 0 1-6-6V80"/><path d="M40 44v32M50 44v32M62 44v32M72 44v32M82 44v32"/></svg>'
+    };
+    function dots() { return STEPS.length < 2 ? null : el("div", { class: "dots", "aria-hidden": "true" }, STEPS.map(function (x, i) { return el("i", { class: i === idx ? "on" : "" }); })); }
+    function next() { idx++; if (idx >= STEPS.length) finish(); else draw(); }
     function finish() {
-      settings.onboarded = true; store("sc.settings", settings);
+      settings.onboarded = true; settings.namesAsked = true; store("sc.settings", settings);
       layer.hidden = true; document.body.style.overflow = ""; renderWeek();
     }
     function draw() {
+      step = STEPS[idx];
       ob.innerHTML = "";
-      var art = el("div", { class: "onb-art" }, [el("div", { class: "blob", html: ART[step], "aria-hidden": "true" })]);
+      var art = el("div", { class: "onb-art" }, [el("div", { class: "blob", html: ARTS[step], "aria-hidden": "true" })]);
       var content, actions;
-      if (step === 0) {
+      if (step === "welcome") {
         content = el("div", { class: "screen", style: "gap:10px" }, [el("h1", { text: "Willkommen!" }), el("p", { text: "Begleite dein Baby Woche für Woche in 3D – und scanne Lebensmittel, um sofort zu sehen, ob sie in der Schwangerschaft unbedenklich sind." })]);
-        actions = [el("button", { class: "btn", text: "Los geht’s", onclick: function () { step = 1; draw(); } })];
-      } else if (step === 1) {
+        actions = [el("button", { class: "btn", text: "Los geht’s", onclick: next })];
+      } else if (step === "names") {
+        var nIn = el("input", { class: "input", id: "onbName", autocomplete: "given-name", placeholder: "z. B. Lina", "aria-label": "Dein Vorname", style: "font-size:1.15rem" });
+        var bIn = el("input", { class: "input", id: "onbBaby", autocomplete: "off", placeholder: "z. B. Krümel (optional)", "aria-label": "Name oder Spitzname fürs Baby", style: "font-size:1.15rem" });
+        nIn.value = settings.name || ""; bIn.value = settings.babyName || "";
+        content = el("div", { class: "screen", style: "gap:12px" }, [
+          el("h1", { text: "Wie heißt du?" }),
+          el("p", { text: "Dann begrüßt dich die App persönlich. Wenn ihr schon einen Namen oder Spitznamen fürs Baby habt, trag ihn gern mit ein." }),
+          el("label", { class: "label", for: "onbName", text: "Dein Vorname" }), nIn,
+          el("label", { class: "label", for: "onbBaby", text: "Name fürs Baby" }), bIn
+        ]);
+        actions = [el("button", { class: "btn", text: "Weiter", onclick: function () {
+            settings.name = nIn.value.trim().slice(0, 30); settings.babyName = bIn.value.trim().slice(0, 30);
+            store("sc.settings", settings); renderWeek(); next();
+          } }),
+          el("button", { class: "btn plain", text: "Überspringen", onclick: next })];
+        setTimeout(function () { try { nIn.focus(); } catch (e) {} }, 300);
+      } else if (step === "due") {
         var defDue = isoDate(new Date(today0().getTime() + 28 * 7 * DAY));
         var dateIn = el("input", { class: "input", type: "date", id: "onbDue", "aria-label": "Errechneter Geburtstermin", style: "font-size:1.15rem;text-align:center" });
         dateIn.value = settings.due || defDue;
@@ -759,22 +799,22 @@
         }
         dateIn.addEventListener("input", upd); dateIn.addEventListener("change", upd); upd();
         content = el("div", { class: "screen", style: "gap:14px" }, [
-          el("h1", { text: "Wann ist dein Termin?" }),
+          el("h1", { text: settings.name ? "Wann ist dein Termin, " + settings.name + "?" : "Wann ist dein Termin?" }),
           el("p", { text: "Trag den errechneten Termin aus dem Mutterpass ein. Daraus berechnet die App jeden Tag die Woche, die Entwicklung deines Babys und den Countdown." }),
           dateIn, sub
         ]);
         actions = [el("button", { class: "btn", text: "Weiter", onclick: function () {
             if (dateIn.value) { var dd = 280 - Math.round((parseDate(dateIn.value) - today0()) / DAY); if (dd >= 0 && dd <= 300) setDue(dateIn.value); }
-            step = 2; draw();
+            next();
           } }),
-          el("button", { class: "btn plain", text: "Später eintragen", onclick: function () { step = 2; draw(); } })];
+          el("button", { class: "btn plain", text: "Später eintragen", onclick: next })];
       } else {
         content = el("div", { class: "screen", style: "gap:10px" }, [el("h1", { text: "So scannst du" }),
           el("p", { text: "Halte den Barcode in den Rahmen, die App erkennt ihn von selbst. Beim ersten Scan fragt dein Handy nach der Kamera – bitte erlauben." }),
           el("p", { text: "Tipp: Über „Teilen → Zum Home-Bildschirm“ startest du die App wie jede andere." })]);
-        actions = [el("button", { class: "btn", text: "Fertig", onclick: finish })];
+        actions = [el("button", { class: "btn", text: "Fertig", onclick: next })];
       }
-      ob.appendChild(el("div", { class: "screen" }, [art, dots(), content]));
+      ob.appendChild(el("div", { class: "screen" }, [art, dots(), content].filter(Boolean)));
       ob.appendChild(el("div", { class: "screen", style: "gap:6px" }, actions));
     }
     draw();
@@ -787,6 +827,7 @@
   setInterval(function () { var w = pregDay(); if (w !== lastDay) { lastDay = w; renderWeek(); } }, 60000);
   var lastDay = pregDay();
   if (!settings.onboarded) onboarding();
+  else if (!settings.namesAsked) onboarding(["names"]);
   if ("serviceWorker" in navigator && location.protocol === "https:") {
     window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
   }

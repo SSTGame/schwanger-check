@@ -296,7 +296,7 @@ details p { margin-top: 8px; color: var(--muted); overflow-wrap: anywhere; font-
     <div class="card due" id="dueCard">
       <div class="due-top">
         <div>
-          <p class="label">Bis zum ET</p>
+          <p class="label" id="dueLabel">Bis zum ET</p>
           <p class="due-big" id="dueLeft">–</p>
         </div>
         <div class="due-date"><small>Errechneter Termin</small><b id="dueDate">–</b></div>
@@ -310,7 +310,7 @@ details p { margin-top: 8px; color: var(--muted); overflow-wrap: anywhere; font-
       <p class="label" id="devLabel">Diese Woche</p>
       <p id="devText"></p>
       <div class="skills">
-        <p class="label">Das kann dein Baby schon</p>
+        <p class="label" id="skillsLabel">Das kann dein Baby schon</p>
         <ul class="skill-list" id="skills"></ul>
         <p class="next-skill" id="nextSkill"></p>
       </div>
@@ -375,6 +375,12 @@ details p { margin-top: 8px; color: var(--muted); overflow-wrap: anywhere; font-
   <!-- PROFIL -->
   <section class="screen" id="s-me" aria-label="Ich" hidden>
     <h1 class="title">Ich</h1>
+    <div class="card">
+      <label class="label" for="meName">Dein Vorname</label>
+      <input class="input" id="meName" autocomplete="given-name" placeholder="z. B. Lina" maxlength="30">
+      <label class="label" for="meBaby">Name oder Spitzname fürs Baby</label>
+      <input class="input" id="meBaby" autocomplete="off" placeholder="z. B. Krümel" maxlength="30">
+    </div>
     <div class="card">
       <p class="label">Errechneter Termin (ET)</p>
       <input class="input" type="date" id="meDue" aria-label="Errechneter Geburtstermin">
@@ -459,11 +465,11 @@ details p { margin-top: 8px; color: var(--muted); overflow-wrap: anywhere; font-
 
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="engine.js?v=6"></script>
-<script src="weeks.js?v=6"></script>
+<script src="engine.js?v=7"></script>
+<script src="weeks.js?v=7"></script>
 <script src="vendor/three.min.js?v=0.149.0" defer></script>
-<script src="baby3d.js?v=6" defer></script>
+<script src="baby3d.js?v=7" defer></script>
 <script src="vendor/zxing.min.js?v=0.21.3" defer></script>
-<script src="app.js?v=6" defer></script>
+<script src="app.js?v=7" defer></script>
 </body>
 </html>
