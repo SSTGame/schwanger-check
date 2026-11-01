@@ -148,7 +148,7 @@
   var FIELDS = "code,product_name,product_name_de,generic_name_de,brands,ingredients_text_de,ingredients_text,lang,image_front_small_url,image_front_url,categories_tags,quantity";
   // Kategorien aus der Datenbank, die eindeutig auf ein Risiko hinweisen
   var CAT_HINTS = [
-    [/^en:(non-alcoholic|alcohol-free)/, "alkoholfrei"],
+    [/^en:(non-alcoholic|alcohol-free|low-alcohol)-(beers?|wines?|sparkling-wines?|ciders?)$/, "alkoholfrei"],
     [/^en:(alcoholic-beverages|beers|lagers|wines|red-wines|white-wines|rose-wines|sparkling-wines|champagnes|spirits|liqueurs|ciders)$/, "alkohol"],
     [/^en:energy-drinks$/, "energydrink"],
     [/^en:tonic-waters?$/, "tonic"],

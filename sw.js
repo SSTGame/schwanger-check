@@ -1,5 +1,5 @@
 // Offline-Cache für die App-Hülle. Produktdaten werden nie zwischengespeichert.
-const CACHE = "schwanger-check-v1";
+const CACHE = "schwanger-check-v2";
 const SHELL = ["./", "index.html", "app.js", "engine.js", "vendor/zxing.min.js", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 self.addEventListener("install", (e) => {
