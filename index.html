@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Schwanger-Check</title>
+<meta name="description" content="Lebensmittel per Barcode scannen und prüfen, ob sie in der Schwangerschaft unbedenklich sind.">
+<meta name="theme-color" content="#f6f2fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141020" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Schwanger-Check">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: App-Hülle in einer Spalte, Tab-Leiste unten, Scanner und Ergebnis als Vollbild-Ebenen darüber. */
+:root {
+  --bg: #f6f2fb; --surface: #ffffff; --surface-2: #efe8f8; --ink: #261a3a; --muted: #6b5f80; --line: #e4dcef;
+  --accent: #6d4fd8; --accent-ink: #ffffff; --accent-soft: #e9e2fb;
+  --peach: #ffe3d6; --peach-ink: #9c4322;
+  --ok: #1d7f4f; --ok-bg: #dcf3e6; --mass: #8f6200; --mass-bg: #fcefcf;
+  --heat: #b84c17; --heat-bg: #fde1d2; --bad: #b92c25; --bad-bg: #fbdcd9; --info: #5a5677; --info-bg: #ebe8f3;
+  --shadow: 0 6px 24px rgba(60, 30, 110, .08);
+  --f-display: "Bricolage Grotesque", ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+  --f-body: "Nunito", ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r-lg: 24px; --r: 16px;
+  --tabbar: 64px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141020; --surface: #1e1830; --surface-2: #2a2240; --ink: #efeaf8; --muted: #a99fbe; --line: #332a4a;
+    --accent: #a993ff; --accent-ink: #160f2a; --accent-soft: #2c2350;
+    --peach: #3a2521; --peach-ink: #ffb798;
+    --ok: #6cd59c; --ok-bg: #163222; --mass: #f2c766; --mass-bg: #362a10;
+    --heat: #ffa477; --heat-bg: #3d2216; --bad: #ff8a80; --bad-bg: #3e1a18; --info: #c0bbd8; --info-bg: #262139;
+    --shadow: 0 6px 24px rgba(0, 0, 0, .35);
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--f-body); -webkit-font-smoothing: antialiased; overscroll-behavior-y: none; }
+button { font: inherit; color: inherit; }
+button, a, input, textarea { touch-action: manipulation; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+h1, h2, h3 { margin: 0; }
+p { margin: 0; }
+
+.app { max-width: 540px; margin: 0 auto; min-height: 100%;
+  padding: calc(env(safe-area-inset-top, 0px) + 18px) max(18px, env(safe-area-inset-right, 0px)) calc(var(--tabbar) + env(safe-area-inset-bottom, 0px) + 24px) max(18px, env(safe-area-inset-left, 0px)); }
+.screen { display: flex; flex-direction: column; gap: 18px; }
+.title { font-family: var(--f-display); font-weight: 800; font-size: 2rem; letter-spacing: -0.025em; line-height: 1.05; text-wrap: balance; }
+.lead { color: var(--muted); }
+.label { font-size: .78rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.card { background: var(--surface); border-radius: var(--r-lg); padding: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px; }
+
+/* Start */
+.hello { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.hello small { display: block; color: var(--muted); font-weight: 700; }
+.week-pill { display: inline-flex; align-items: center; gap: 8px; background: var(--peach); color: var(--peach-ink); font-weight: 800; padding: 8px 14px; border-radius: 999px; border: 0; cursor: pointer; white-space: nowrap; }
+.scan-hero { position: relative; overflow: hidden; background: var(--accent); color: var(--accent-ink); border-radius: 28px; padding: 22px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 14px 32px rgba(109, 79, 216, .28); }
+.scan-hero h2 { font-family: var(--f-display); font-size: 1.55rem; line-height: 1.1; letter-spacing: -0.015em; max-width: 14ch; }
+.scan-hero p { opacity: .85; max-width: 30ch; }
+.scan-hero .bars { position: absolute; right: -6px; top: 18px; opacity: .18; }
+.scan-btn { align-self: flex-start; display: inline-flex; align-items: center; gap: 10px; background: var(--accent-ink); color: var(--accent); border: 0; border-radius: 999px; padding: 13px 20px; font-weight: 800; font-size: 1.05rem; cursor: pointer; }
+.quick { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.quick button { background: var(--surface); border: 0; border-radius: var(--r); padding: 16px; text-align: left; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px; cursor: pointer; min-width: 0; }
+.quick strong { font-weight: 800; }
+.quick span { color: var(--muted); font-size: .9rem; }
+.ico { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.tip { background: var(--surface-2); border-radius: var(--r); padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; }
+.tip p { font-size: .95rem; }
+.tip b { display: block; }
+
+/* Listen */
+.list { list-style: none; margin: 0; padding: 0; background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow); overflow: hidden; }
+.list li + li { border-top: 1px solid var(--line); }
+.prow { display: flex; align-items: center; gap: 12px; padding: 12px 16px; width: 100%; background: none; border: 0; text-align: left; cursor: pointer; }
+.prow .thumb { flex: none; width: 46px; height: 46px; border-radius: 12px; background: var(--surface-2); object-fit: cover; display: grid; place-items: center; color: var(--muted); overflow: hidden; }
+.prow .thumb img { width: 100%; height: 100%; object-fit: cover; }
+.prow .txt { flex: 1; min-width: 0; }
+.prow .txt b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prow .txt small { color: var(--muted); }
+.empty { color: var(--muted); padding: 22px 18px; text-align: center; }
+
+.dot { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--v); }
+.chip { flex: none; display: inline-flex; align-items: center; font-size: .74rem; font-weight: 800; letter-spacing: .03em; padding: 4px 10px; border-radius: 999px; background: var(--v-bg); color: var(--v); white-space: nowrap; }
+.v-ok { --v: var(--ok); --v-bg: var(--ok-bg); }
+.v-massvoll { --v: var(--mass); --v-bg: var(--mass-bg); }
+.v-erhitzen { --v: var(--heat); --v-bg: var(--heat-bg); }
+.v-meiden { --v: var(--bad); --v-bg: var(--bad-bg); }
+.v-hinweis, .v-unklar { --v: var(--info); --v-bg: var(--info-bg); }
+
+/* Lexikon */
+.search { width: 100%; border: 0; background: var(--surface); box-shadow: var(--shadow); border-radius: 999px; padding: 14px 18px; font: 1rem var(--f-body); color: var(--ink); }
+.filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.filters::-webkit-scrollbar { display: none; }
+.filters button { flex: none; border: 0; background: var(--surface); box-shadow: var(--shadow); color: var(--muted); border-radius: 999px; padding: 8px 14px; font-weight: 800; font-size: .88rem; cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.lex li { padding: 14px 16px; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: start; }
+.lex h3 { font-size: 1rem; font-weight: 800; min-width: 0; }
+.lex p { grid-column: 1 / -1; color: var(--muted); font-size: .93rem; }
+
+/* Formulare */
+.field { display: flex; flex-direction: column; gap: 8px; }
+textarea, .input { width: 100%; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); border-radius: var(--r); padding: 12px 14px; font: 1rem/1.45 var(--f-body); }
+textarea { min-height: 140px; resize: vertical; }
+textarea:focus, .input:focus { border-color: var(--accent); outline: none; }
+.btn { border: 0; border-radius: 999px; padding: 14px 20px; font-weight: 800; font-size: 1rem; background: var(--accent); color: var(--accent-ink); cursor: pointer; text-align: center; text-decoration: none; display: inline-flex; justify-content: center; align-items: center; gap: 8px; }
+.btn.soft { background: var(--accent-soft); color: var(--accent); }
+.btn.plain { background: transparent; color: var(--accent); padding-inline: 8px; }
+.btn[disabled] { opacity: .45; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.row > .btn { flex: 1 1 auto; }
+
+.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--surface-2); border-radius: 999px; padding: 4px; gap: 4px; }
+.seg button { border: 0; background: transparent; border-radius: 999px; padding: 10px 8px; font-weight: 800; color: var(--muted); cursor: pointer; font-size: .92rem; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+
+/* Tab-Leiste */
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid var(--line);
+  padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); }
+.tabbar nav { max-width: 540px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; }
+.tab { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: .7rem; font-weight: 800; color: var(--muted); padding: 6px 0; cursor: pointer; }
+.tab[aria-current="page"] { color: var(--accent); }
+.tab-scan { justify-self: center; width: 58px; height: 58px; margin-top: -26px; border-radius: 50%; border: 4px solid var(--bg); background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; cursor: pointer; box-shadow: 0 8px 20px rgba(109, 79, 216, .35); }
+
+/* Vollbild-Ebenen */
+.layer { position: fixed; inset: 0; z-index: 40; background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.layer-inner { max-width: 540px; margin: 0 auto; padding: calc(env(safe-area-inset-top, 0px) + 12px) max(18px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 32px) max(18px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 16px; }
+#sheetBody { display: flex; flex-direction: column; gap: 16px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; }
+.icon-btn { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--surface); box-shadow: var(--shadow); display: grid; place-items: center; cursor: pointer; color: var(--ink); }
+@media (prefers-reduced-motion: no-preference) {
+  .layer.anim .layer-inner { animation: up .28s cubic-bezier(.2,.8,.2,1); }
+  @keyframes up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+}
+
+/* Scanner */
+.scanner { background: #0d0a14; color: #fff; overflow: hidden; }
+.scanner video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.scan-ui { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) max(18px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 24px) max(18px, env(safe-area-inset-left, 0px)); }
+.scan-ui .icon-btn { background: rgba(0,0,0,.45); color: #fff; box-shadow: none; }
+.frame-wrap { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.frame { width: min(78vw, 360px); aspect-ratio: 16 / 9; max-width: 100%; border-radius: 22px; box-shadow: 0 0 0 100vmax rgba(10, 6, 20, .55); position: relative; }
+.frame::before { content: ""; position: absolute; inset: 0; border-radius: 22px; border: 3px solid rgba(255,255,255,.9); }
+.frame .laser { position: absolute; left: 8%; right: 8%; top: 50%; height: 2px; background: #b9a6ff; box-shadow: 0 0 12px #b9a6ff; }
+@media (prefers-reduced-motion: no-preference) { .frame .laser { animation: laser 1.6s ease-in-out infinite alternate; } @keyframes laser { from { top: 18%; } to { top: 82%; } } }
+.frame.hit::before { border-color: #6cd59c; }
+.scan-msg { text-align: center; font-weight: 700; text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+.scan-actions { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.scan-actions .row { width: 100%; max-width: 420px; }
+.btn.glass { background: rgba(255,255,255,.16); color: #fff; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.scan-err { background: rgba(0,0,0,.6); border-radius: var(--r); padding: 14px 16px; max-width: 420px; text-align: center; }
+
+/* Ergebnis */
+.prod-head { display: flex; gap: 14px; align-items: center; }
+.prod-img { flex: none; width: 76px; height: 76px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow); overflow: hidden; display: grid; place-items: center; color: var(--muted); }
+.prod-img img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.prod-head .txt { min-width: 0; }
+.prod-head h1 { font-family: var(--f-display); font-size: 1.4rem; line-height: 1.15; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.prod-head small { color: var(--muted); font-weight: 700; }
+.verdict { border-radius: var(--r-lg); padding: 20px; background: var(--v-bg); display: flex; gap: 16px; align-items: center; }
+.verdict .badge { flex: none; width: 60px; height: 60px; border-radius: 50%; background: var(--v); color: var(--surface); display: grid; place-items: center; }
+.verdict h2 { font-family: var(--f-display); font-size: 1.6rem; line-height: 1.05; color: var(--v); letter-spacing: -0.015em; }
+.verdict p { margin-top: 4px; }
+@media (prefers-reduced-motion: no-preference) { .verdict .badge { animation: pop .4s cubic-bezier(.3,1.6,.5,1); } @keyframes pop { from { transform: scale(.4); } to { transform: none; } } }
+.cond { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); border-radius: var(--r); padding: 14px 16px; box-shadow: var(--shadow); font-size: .95rem; }
+.cond svg { flex: none; color: var(--heat); }
+.items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.items li { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; padding: 12px 0; }
+.items li:first-child { padding-top: 4px; }
+.items li + li { border-top: 1px solid var(--line); }
+.items .dot { grid-row: span 3; margin-top: 6px; }
+.items h3 { font-size: 1rem; font-weight: 800; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
+.items p { color: var(--muted); font-size: .93rem; min-width: 0; }
+.items .tri { color: var(--peach-ink); font-weight: 700; }
+.found { font-size: .78rem; font-weight: 700; background: var(--surface-2); color: var(--ink); border-radius: 6px; padding: 1px 7px; overflow-wrap: anywhere; }
+details summary { cursor: pointer; font-weight: 800; color: var(--accent); }
+details p { margin-top: 8px; color: var(--muted); overflow-wrap: anywhere; font-size: .93rem; }
+.src { color: var(--muted); font-size: .85rem; }
+.src a { color: var(--accent); }
+.spinner { width: 34px; height: 34px; border-radius: 50%; border: 4px solid var(--accent-soft); border-top-color: var(--accent); margin: 0 auto; }
+@media (prefers-reduced-motion: no-preference) { .spinner { animation: spin .9s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } } }
+.center { text-align: center; display: flex; flex-direction: column; gap: 12px; align-items: center; padding: 40px 0; }
+
+/* Onboarding */
+.onb { display: flex; flex-direction: column; min-height: 100%; }
+.onb .layer-inner { min-height: 100%; justify-content: space-between; }
+.onb-art { display: grid; place-items: center; padding: 28px 0 8px; }
+.onb-art .blob { width: 220px; height: 220px; max-width: 70vw; max-height: 70vw; border-radius: 42% 58% 55% 45% / 48% 42% 58% 52%; background: var(--peach); display: grid; place-items: center; color: var(--peach-ink); }
+.onb h1 { font-family: var(--f-display); font-weight: 800; font-size: 2rem; line-height: 1.08; letter-spacing: -0.025em; text-wrap: balance; }
+.onb p { color: var(--muted); font-size: 1.05rem; }
+.dots { display: flex; gap: 6px; justify-content: center; }
+.dots i { width: 8px; height: 8px; border-radius: 99px; background: var(--line); }
+.dots i.on { width: 22px; background: var(--accent); }
+.week-input { display: flex; align-items: center; justify-content: center; gap: 18px; }
+.week-input button { width: 52px; height: 52px; border-radius: 50%; border: 0; background: var(--surface); box-shadow: var(--shadow); font-size: 1.6rem; font-weight: 800; color: var(--accent); cursor: pointer; }
+.week-input output { font-family: var(--f-display); font-size: 3.4rem; font-weight: 800; min-width: 2.2ch; text-align: center; font-variant-numeric: tabular-nums; line-height: 1; }
+.week-sub { text-align: center; color: var(--muted); font-weight: 700; }
+
+.toast { position: fixed; left: 50%; bottom: calc(var(--tabbar) + env(safe-area-inset-bottom, 0px) + 20px); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-weight: 700; z-index: 60; max-width: calc(100% - 36px); text-align: center; }
+.foot { color: var(--muted); font-size: .85rem; display: flex; flex-direction: column; gap: 8px; }
+.foot a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- START -->
+  <section class="screen" id="s-home" aria-label="Start">
+    <div class="hello">
+      <div>
+        <small id="greet">Hallo!</small>
+        <h1 class="title">Schwanger-Check</h1>
+      </div>
+      <button class="week-pill" id="weekPill" aria-label="Schwangerschaftswoche ändern">SSW –</button>
+    </div>
+
+    <div class="scan-hero">
+      <svg class="bars" width="150" height="110" viewBox="0 0 150 110" aria-hidden="true"><g fill="currentColor"><rect x="0" width="8" height="110"/><rect x="14" width="4" height="110"/><rect x="24" width="12" height="110"/><rect x="42" width="4" height="110"/><rect x="52" width="8" height="110"/><rect x="66" width="4" height="110"/><rect x="76" width="14" height="110"/><rect x="96" width="4" height="110"/><rect x="106" width="8" height="110"/><rect x="120" width="4" height="110"/><rect x="130" width="12" height="110"/></g></svg>
+      <h2>Darf ich das essen?</h2>
+      <p>Barcode scannen und sofort sehen, ob das Produkt in der Schwangerschaft unbedenklich ist.</p>
+      <button class="scan-btn" id="heroScan">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 9v6M10.5 9v6M14 9v6M17 9v6"/></svg>
+        Barcode scannen
+      </button>
+    </div>
+
+    <div class="quick">
+      <button id="qPhoto">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg></span>
+        <strong>Foto vom Barcode</strong><span>Aus der Galerie</span>
+      </button>
+      <button id="qText">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 6h14M5 11h14M5 16h9"/></svg></span>
+        <strong>Zutaten prüfen</strong><span>Liste eintippen</span>
+      </button>
+    </div>
+    <input type="file" id="photoInput" accept="image/*" hidden>
+
+    <div class="tip" id="tipBox">
+      <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg></span>
+      <p id="tipText"></p>
+    </div>
+
+    <div class="field">
+      <p class="label">Zuletzt gescannt</p>
+      <ul class="list" id="recent"></ul>
+    </div>
+  </section>
+
+  <!-- LEXIKON -->
+  <section class="screen" id="s-lex" aria-label="Lexikon" hidden>
+    <h1 class="title">Lexikon</h1>
+    <input class="search" id="q" type="search" placeholder="Suchen, z. B. Mozzarella" aria-label="Lebensmittel suchen" autocomplete="off">
+    <div class="filters" id="filters">
+      <button aria-pressed="true" data-f="alle">Alle</button>
+      <button aria-pressed="false" data-f="ok">Unbedenklich</button>
+      <button aria-pressed="false" data-f="massvoll">In Maßen</button>
+      <button aria-pressed="false" data-f="erhitzen">Nur durcherhitzt</button>
+      <button aria-pressed="false" data-f="meiden">Meiden</button>
+    </div>
+    <ul class="list lex" id="lex"></ul>
+  </section>
+
+  <!-- VERLAUF -->
+  <section class="screen" id="s-hist" aria-label="Verlauf" hidden>
+    <div class="hello">
+      <h1 class="title">Verlauf</h1>
+      <button class="btn plain" id="clearHist">Leeren</button>
+    </div>
+    <ul class="list" id="hist"></ul>
+  </section>
+
+  <!-- PROFIL -->
+  <section class="screen" id="s-me" aria-label="Ich" hidden>
+    <h1 class="title">Ich</h1>
+    <div class="card">
+      <p class="label">Schwangerschaftswoche</p>
+      <div class="week-input">
+        <button id="meMinus" aria-label="Eine Woche weniger">−</button>
+        <output id="meWeek" aria-live="polite">–</output>
+        <button id="mePlus" aria-label="Eine Woche mehr">+</button>
+      </div>
+      <p class="week-sub" id="meTri"></p>
+      <p class="lead" style="font-size:.93rem">Die Woche zählt automatisch weiter. Im ersten Trimester hebt die App Hinweise hervor, die dann besonders wichtig sind.</p>
+    </div>
+    <div class="card">
+      <p class="label">So prüft die App</p>
+      <p>Die Zutaten kommen aus <a href="https://de.openfoodfacts.org" target="_blank" rel="noopener" style="color:var(--accent)">Open Food Facts</a>, einer freien Datenbank. Geprüft wird nach den Empfehlungen des BfR und des Netzwerks „Gesund ins Leben“.</p>
+      <p>„Durcherhitzt“ heißt: mindestens 2 Minuten lang 70 °C im Kern.</p>
+    </div>
+    <div class="foot">
+      <p>Ersetzt keine Beratung durch Ärztin, Arzt oder Hebamme. Datenbank-Einträge können fehlen oder veraltet sein – im Zweifel die Zutatenliste auf der Packung lesen.</p>
+      <p>Quellen: <a href="https://www.bfr.bund.de/presseinformation/unsichtbare-gefahr-listerien-in-raeucherfisch/" target="_blank" rel="noopener">BfR zu Listerien</a> · <a href="https://www.gesund-ins-leben.de" target="_blank" rel="noopener">Gesund ins Leben</a> · Produktdaten © Open Food Facts (ODbL)</p>
+      <p>Alle Daten bleiben auf diesem Gerät.</p>
+    </div>
+  </section>
+</div>
+
+<!-- TAB-LEISTE -->
+<div class="tabbar">
+  <nav aria-label="Navigation">
+    <button class="tab" data-s="home" aria-current="page">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg>Start
+    </button>
+    <button class="tab" data-s="lex">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h10a4 4 0 0 1 4 4v12H9a4 4 0 0 1-4-4z"/><path d="M9 9h6M9 13h4"/></svg>Lexikon
+    </button>
+    <button class="tab-scan" id="tabScan" aria-label="Barcode scannen">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 9v6M10.5 9v6M14 9v6M17 9v6"/></svg>
+    </button>
+    <button class="tab" data-s="hist">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Verlauf
+    </button>
+    <button class="tab" data-s="me">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Ich
+    </button>
+  </nav>
+</div>
+
+<!-- SCANNER -->
+<div class="layer scanner" id="scanner" hidden>
+  <video id="video" playsinline muted autoplay></video>
+  <div class="frame-wrap"><div class="frame" id="frame"><div class="laser"></div></div></div>
+  <div class="scan-ui">
+    <div class="topbar">
+      <button class="icon-btn" id="scanClose" aria-label="Scanner schließen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <button class="icon-btn" id="torch" aria-label="Licht" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L5 14h6l-1 8 8-12h-6z"/></svg></button>
+    </div>
+    <div class="scan-actions">
+      <p class="scan-msg" id="scanMsg">Barcode in den Rahmen halten</p>
+      <div class="scan-err" id="scanErr" hidden></div>
+      <div class="row">
+        <button class="btn glass" id="scanManual">Nummer eintippen</button>
+        <button class="btn glass" id="scanPhoto">Foto wählen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ERGEBNIS / ZUTATEN / NUMMER -->
+<div class="layer" id="sheet" hidden>
+  <div class="layer-inner">
+    <div class="topbar">
+      <button class="icon-btn" id="sheetClose" aria-label="Zurück"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="btn soft" id="sheetScan" style="padding:10px 16px">Nächstes scannen</button>
+    </div>
+    <div id="sheetBody"></div>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div class="layer onb" id="onb" hidden>
+  <div class="layer-inner" id="onbBody"></div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="engine.js"></script>
+<script src="vendor/zxing.min.js" defer></script>
+<script src="app.js" defer></script>
+</body>
+</html>
