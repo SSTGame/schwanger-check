@@ -1,5 +1,5 @@
 // Offline-Cache für die App-Hülle. Produktdaten werden nie zwischengespeichert.
-const CACHE = "schwanger-check-v2";
+const CACHE = "schwanger-check-v3";
 const SHELL = ["./", "index.html", "app.js", "engine.js", "vendor/zxing.min.js", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 self.addEventListener("install", (e) => {
@@ -13,7 +13,8 @@ self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET" || url.origin !== location.origin) return; // Datenbank & Fonts direkt aus dem Netz
   // Erst Netz (für Updates), bei Offline aus dem Cache
   e.respondWith(
-    fetch(e.request).then((res) => {
+    fetch(e.request.url, { cache: "no-cache" }).then((res) => {
+      if (!res.ok) return caches.match(e.request, { ignoreSearch: true }).then((r) => r || res);
       const copy = res.clone();
       caches.open(CACHE).then((c) => c.put(e.request, copy));
       return res;
