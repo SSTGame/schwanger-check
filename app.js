@@ -51,31 +51,133 @@
   function vkey(v) { return v === "hinweis" ? "ok" : v; }
   function chip(level) { return el("span", { class: "chip v-" + level, text: CHIP[level] || level }); }
 
-  /* ---------- Schwangerschaftswoche ---------- */
+  /* ---------- Termin & Schwangerschaftswoche ---------- */
   var settings = store("sc.settings") || {};
-  function currentWeek() {
-    if (!settings.week) return null;
-    var days = Math.floor((Date.now() - new Date(settings.setAt).getTime()) / 864e5);
-    return Math.min(42, settings.week + Math.max(0, Math.floor(days / 7)));
-  }
-  function setWeek(w) {
-    settings.week = w ? Math.max(1, Math.min(42, w)) : null;
-    settings.setAt = new Date().toISOString();
+  var DAY = 864e5;
+  function today0() { var d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+  function parseDate(iso) { var p = String(iso).split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function isoDate(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  // Alte Speicherung (Woche + Datum) in einen Termin umrechnen
+  if (!settings.due && settings.week && settings.setAt) {
+    var s0 = new Date(settings.setAt); s0.setHours(0, 0, 0, 0);
+    settings.due = isoDate(new Date(s0.getTime() + (40 - settings.week) * 7 * DAY));
     store("sc.settings", settings);
-    renderWeek();
+  }
+  // Tag der Schwangerschaft (0 = erster Tag der letzten Periode, 280 = ET)
+  function pregDay() {
+    if (!settings.due) return null;
+    return 280 - Math.round((parseDate(settings.due) - today0()) / DAY);
+  }
+  function currentWeek() {
+    var d = pregDay();
+    if (d == null) return null;
+    return Math.max(1, Math.min(42, Math.floor(d / 7)));
+  }
+  function setDue(iso) {
+    settings.due = iso || null; delete settings.week; delete settings.setAt;
+    store("sc.settings", settings);
+    viewWeek = null; renderWeek();
+  }
+  function shiftWeek(delta) {
+    var base = settings.due ? parseDate(settings.due) : new Date(today0().getTime() + 28 * 7 * DAY);
+    setDue(isoDate(new Date(base.getTime() - delta * 7 * DAY)));
   }
   function trimester(w) { return !w ? null : w <= 13 ? 1 : w <= 27 ? 2 : 3; }
+  function sswText(d) { return "SSW " + Math.floor(d / 7) + "+" + (d % 7); }
+
+  // Meilensteine: [ab SSW, Fähigkeit]
+  var SKILLS = [
+    [6, "Herz schlägt"], [8, "bewegt sich"], [10, "streckt sich"], [11, "gähnt"], [12, "schluckt"], [12, "beugt die Finger"],
+    [14, "nuckelt am Daumen"], [14, "runzelt die Stirn"], [16, "greift"], [18, "hört Geräusche"], [20, "Tritte spürbar"],
+    [22, "spürt Berührung"], [24, "erkennt deine Stimme"], [26, "öffnet die Augen"], [27, "hat Schluckauf"],
+    [28, "blinzelt"], [28, "träumt"], [31, "dreht den Kopf zum Licht"], [32, "übt Atmen"], [34, "dreht sich in Geburtslage"], [37, "ist bereit für die Geburt"]
+  ];
+
+  var viewWeek = null, baby = null;
+  function shownWeek() { return viewWeek || Math.max(4, currentWeek() || 12); }
+
   function renderWeek() {
-    var w = currentWeek();
-    $("weekPill").textContent = w ? "SSW " + w : "SSW eintragen";
-    $("meWeek").textContent = w || "–";
-    $("meTri").textContent = w ? trimester(w) + ". Trimester" : "Noch nicht eingetragen";
+    var w = currentWeek(), d = pregDay();
     var h = new Date().getHours();
     $("greet").textContent = (h < 11 ? "Guten Morgen" : h < 18 ? "Hallo" : "Guten Abend") + (w ? " · " + trimester(w) + ". Trimester" : "");
+    $("weekPill").textContent = d != null ? sswText(Math.max(0, d)) : "Termin eintragen";
+    $("meWeek").textContent = w || "–";
+    $("meTri").textContent = d != null ? sswText(Math.max(0, d)) + " · " + trimester(w) + ". Trimester" : "Noch nicht eingetragen";
+    $("meDue").value = settings.due || "";
+    renderBaby();
+    renderDue();
   }
+
+  function renderBaby() {
+    var cw = currentWeek(), sw = shownWeek(), info = window.SSW.get(sw);
+    $("wkTitle").textContent = "Woche " + info.week;
+    $("wkToday").hidden = !(viewWeek && cw && viewWeek !== Math.max(4, cw));
+    $("wkPrev").disabled = info.week <= window.SSW.MIN;
+    $("wkNext").disabled = info.week >= window.SSW.MAX;
+    $("stLen").textContent = window.SSW.fmtLen(info.cm);
+    $("stWeight").textContent = info.g < 1 ? "unter 1 g" : window.SSW.fmtWeight(info.g);
+    $("stEmoji").textContent = info.emoji;
+    $("stFruit").textContent = info.fruit;
+    $("fbEmoji").textContent = info.emoji;
+    $("devLabel").textContent = (viewWeek && viewWeek !== cw) ? "In Woche " + info.week : "Diese Woche";
+    $("devText").textContent = info.text;
+    var ul = $("skills"); ul.innerHTML = "";
+    var have = SKILLS.filter(function (x) { return x[0] <= info.week; });
+    if (!have.length) ul.appendChild(el("li", { text: "wächst und wächst" }));
+    have.slice(-6).forEach(function (x) { ul.appendChild(el("li", null, [x[1], el("small", { text: "ab " + x[0] + ". W." })])); });
+    var next = SKILLS.filter(function (x) { return x[0] > info.week; })[0];
+    $("nextSkill").innerHTML = "";
+    if (next) { $("nextSkill").append("Als Nächstes, etwa ab Woche " + next[0] + ": "); $("nextSkill").appendChild(el("b", { text: next[1] })); }
+    if (baby) baby.setWeek(info.week);
+  }
+
+  function renderDue() {
+    var d = pregDay();
+    if (d == null) {
+      $("dueLeft").textContent = "Termin eintragen";
+      $("dueDate").textContent = "–";
+      $("dueFill").style.width = "0";
+      $("dueSub").textContent = "Trag deinen errechneten Termin unter „Ich“ ein, dann zählt die App mit.";
+      return;
+    }
+    var left = 280 - d, due = parseDate(settings.due);
+    $("dueDate").textContent = due.toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" });
+    var txt;
+    if (left > 0) {
+      var wk = Math.floor(left / 7), dd = left % 7;
+      txt = (wk ? wk + (wk === 1 ? " Woche" : " Wochen") : "") + (wk && dd ? " und " : "") + (dd ? dd + (dd === 1 ? " Tag" : " Tage") : "");
+      $("dueSub").textContent = "Tag " + Math.max(0, d) + " von 280 · " + sswText(Math.max(0, d)) + " · noch " + left + (left === 1 ? " Tag" : " Tage");
+    } else if (left === 0) {
+      txt = "Heute ist der ET!"; $("dueSub").textContent = "Alles Gute für die Geburt.";
+    } else {
+      txt = (-left) + (left === -1 ? " Tag" : " Tage") + " über dem ET"; $("dueSub").textContent = "Ganz normal – nur wenige Babys kommen genau am Termin.";
+    }
+    $("dueLeft").textContent = txt;
+    var pct = Math.max(0, Math.min(100, d / 280 * 100));
+    $("dueFill").style.width = pct + "%";
+    $("dueBar").setAttribute("aria-valuenow", String(Math.max(0, Math.min(280, d))));
+  }
+
   $("weekPill").addEventListener("click", function () { go("me"); });
-  $("meMinus").addEventListener("click", function () { setWeek((currentWeek() || 13) - 1); });
-  $("mePlus").addEventListener("click", function () { setWeek((currentWeek() || 11) + 1); });
+  $("meMinus").addEventListener("click", function () { shiftWeek(-1); });
+  $("mePlus").addEventListener("click", function () { shiftWeek(1); });
+  $("meDue").addEventListener("change", function () { if (this.value) { setDue(this.value); toast("Termin gespeichert"); } });
+  $("wkPrev").addEventListener("click", function () { viewWeek = Math.max(window.SSW.MIN, shownWeek() - 1); renderBaby(); });
+  $("wkNext").addEventListener("click", function () { viewWeek = Math.min(window.SSW.MAX, shownWeek() + 1); renderBaby(); });
+  $("wkToday").addEventListener("click", function () { viewWeek = null; renderBaby(); });
+
+  function initBaby() {
+    var stage = $("stage");
+    if (!window.Baby3D || !window.Baby3D.supported()) { $("stageFallback").hidden = false; $("stageHint").hidden = true; return; }
+    try {
+      baby = new window.Baby3D(stage);
+      baby.setWeek(shownWeek());
+      if (!$("s-home").hidden && !document.hidden) baby.start();
+      stage.addEventListener("pointerdown", function () { $("stageHint").style.opacity = "0"; }, { once: true });
+    } catch (e) { baby = null; $("stageFallback").hidden = false; $("stageHint").hidden = true; }
+  }
+  function babyRun(on) { if (baby) { if (on) baby.start(); else baby.stop(); } }
+  document.addEventListener("visibilitychange", function () { babyRun(!document.hidden && !$("s-home").hidden && sheet.hidden && $("scanner").hidden); });
 
   /* ---------- Tipps ---------- */
   var TIPS = [
@@ -90,6 +192,7 @@
   ];
   (function () {
     var t = TIPS[Math.floor(Date.now() / 864e5) % TIPS.length];
+    if (!$("tipText")) return;
     $("tipText").innerHTML = "";
     $("tipText").appendChild(el("b", { text: t[0] }));
     $("tipText").appendChild(document.createTextNode(t[1]));
@@ -103,6 +206,7 @@
       if (t.getAttribute("data-s") === s) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
     });
     if (s === "hist") renderHist();
+    babyRun(s === "home");
     window.scrollTo(0, 0);
   }
   document.querySelectorAll(".tab").forEach(function (t) { t.addEventListener("click", function () { go(t.getAttribute("data-s")); }); });
@@ -211,10 +315,11 @@
   /* ---------- Bogen (Ergebnis, Eingaben) ---------- */
   var sheet = $("sheet"), body = $("sheetBody");
   function openSheet() {
+    babyRun(false);
     sheet.hidden = false; sheet.classList.remove("anim"); void sheet.offsetWidth; sheet.classList.add("anim");
     sheet.scrollTop = 0; document.body.style.overflow = "hidden";
   }
-  function closeSheet() { sheet.hidden = true; document.body.style.overflow = ""; renderRecent(); }
+  function closeSheet() { sheet.hidden = true; document.body.style.overflow = ""; renderRecent(); babyRun(!$("s-home").hidden && $("scanner").hidden); }
   $("sheetClose").addEventListener("click", closeSheet);
   $("sheetScan").addEventListener("click", function () { closeSheet(); openScanner(); });
 
@@ -388,6 +493,7 @@
   function scanErr(msg) { $("scanErr").textContent = msg; $("scanErr").hidden = !msg; $("scanMsg").hidden = !!msg; }
 
   async function openScanner() {
+    babyRun(false);
     scanner.hidden = false; document.body.style.overflow = "hidden";
     scanErr(""); $("frame").classList.remove("hit"); $("torch").hidden = true;
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -454,7 +560,7 @@
     if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
     video.srcObject = null; track = null; torchOn = false;
   }
-  function closeScanner() { stopStream(); scanner.hidden = true; document.body.style.overflow = sheet.hidden ? "" : "hidden"; }
+  function closeScanner() { stopStream(); scanner.hidden = true; document.body.style.overflow = sheet.hidden ? "" : "hidden"; babyRun(sheet.hidden && !$("s-home").hidden); }
   $("scanClose").addEventListener("click", closeScanner);
   $("torch").addEventListener("click", function () {
     if (!track) return; torchOn = !torchOn;
@@ -621,7 +727,7 @@
 
   /* ---------- Onboarding ---------- */
   function onboarding() {
-    var step = 0, week = 12;
+    var step = 0;
     var layer = $("onb"), ob = $("onbBody");
     layer.hidden = false; document.body.style.overflow = "hidden";
     var ART = [
@@ -639,23 +745,29 @@
       var art = el("div", { class: "onb-art" }, [el("div", { class: "blob", html: ART[step], "aria-hidden": "true" })]);
       var content, actions;
       if (step === 0) {
-        content = el("div", { class: "screen", style: "gap:10px" }, [el("h1", { text: "Darf ich das essen?" }), el("p", { text: "Scanne den Barcode eines Lebensmittels und sieh sofort, ob es in der Schwangerschaft unbedenklich ist – nach den Empfehlungen von BfR und „Gesund ins Leben“." })]);
+        content = el("div", { class: "screen", style: "gap:10px" }, [el("h1", { text: "Willkommen!" }), el("p", { text: "Begleite dein Baby Woche für Woche in 3D – und scanne Lebensmittel, um sofort zu sehen, ob sie in der Schwangerschaft unbedenklich sind." })]);
         actions = [el("button", { class: "btn", text: "Los geht’s", onclick: function () { step = 1; draw(); } })];
       } else if (step === 1) {
-        var out = el("output", { text: String(week), "aria-live": "polite" });
+        var defDue = isoDate(new Date(today0().getTime() + 28 * 7 * DAY));
+        var dateIn = el("input", { class: "input", type: "date", id: "onbDue", "aria-label": "Errechneter Geburtstermin", style: "font-size:1.15rem;text-align:center" });
+        dateIn.value = settings.due || defDue;
+        var sub = el("p", { class: "week-sub" });
+        function upd() {
+          if (!dateIn.value) { sub.textContent = ""; return; }
+          var dd = 280 - Math.round((parseDate(dateIn.value) - today0()) / DAY);
+          sub.textContent = dd < 0 || dd > 300 ? "Bitte ein Datum in den nächsten 40 Wochen wählen." : "Das ist " + sswText(dd) + " · " + trimester(Math.max(1, Math.floor(dd / 7))) + ". Trimester";
+        }
+        dateIn.addEventListener("input", upd); dateIn.addEventListener("change", upd); upd();
         content = el("div", { class: "screen", style: "gap:14px" }, [
-          el("h1", { text: "In welcher Woche bist du?" }),
-          el("p", { text: "So kann die App Hinweise hervorheben, die gerade besonders wichtig sind. Die Woche zählt automatisch weiter." }),
-          el("div", { class: "week-input" }, [
-            el("button", { "aria-label": "Eine Woche weniger", text: "−", onclick: function () { week = Math.max(1, week - 1); out.textContent = week; sub.textContent = trimester(week) + ". Trimester"; } }),
-            out,
-            el("button", { "aria-label": "Eine Woche mehr", text: "+", onclick: function () { week = Math.min(42, week + 1); out.textContent = week; sub.textContent = trimester(week) + ". Trimester"; } })
-          ])
+          el("h1", { text: "Wann ist dein Termin?" }),
+          el("p", { text: "Trag den errechneten Termin aus dem Mutterpass ein. Daraus berechnet die App jeden Tag die Woche, die Entwicklung deines Babys und den Countdown." }),
+          dateIn, sub
         ]);
-        var sub = el("p", { class: "week-sub", text: trimester(week) + ". Trimester" });
-        content.appendChild(sub);
-        actions = [el("button", { class: "btn", text: "Weiter", onclick: function () { setWeek(week); step = 2; draw(); } }),
-          el("button", { class: "btn plain", text: "Überspringen", onclick: function () { step = 2; draw(); } })];
+        actions = [el("button", { class: "btn", text: "Weiter", onclick: function () {
+            if (dateIn.value) { var dd = 280 - Math.round((parseDate(dateIn.value) - today0()) / DAY); if (dd >= 0 && dd <= 300) setDue(dateIn.value); }
+            step = 2; draw();
+          } }),
+          el("button", { class: "btn plain", text: "Später eintragen", onclick: function () { step = 2; draw(); } })];
       } else {
         content = el("div", { class: "screen", style: "gap:10px" }, [el("h1", { text: "So scannst du" }),
           el("p", { text: "Halte den Barcode in den Rahmen, die App erkennt ihn von selbst. Beim ersten Scan fragt dein Handy nach der Kamera – bitte erlauben." }),
@@ -670,10 +782,14 @@
 
   /* ---------- Start ---------- */
   renderWeek(); renderRecent(); renderLex();
+  initBaby();
+  // nach Mitternacht neu rechnen
+  setInterval(function () { var w = pregDay(); if (w !== lastDay) { lastDay = w; renderWeek(); } }, 60000);
+  var lastDay = pregDay();
   if (!settings.onboarded) onboarding();
   if ("serviceWorker" in navigator && location.protocol === "https:") {
     window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
   }
   // Für Tests
-  window.__sc = { lookup: lookup, validEAN: validEAN, normCode: normCode, fromOFF: fromOFF, evaluate: evaluate, decodeImage: decodeImage, gotCode: gotCode };
+  window.__sc = { pregDay: pregDay, currentWeek: currentWeek, setDue: setDue, baby: function () { return baby; }, lookup: lookup, validEAN: validEAN, normCode: normCode, fromOFF: fromOFF, evaluate: evaluate, decodeImage: decodeImage, gotCode: gotCode };
 })();

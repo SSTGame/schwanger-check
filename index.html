@@ -30,6 +30,7 @@
   --f-body: "Nunito", ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
   --r-lg: 24px; --r: 16px;
   --tabbar: 64px;
+  --womb-1: #f9b7a6; --womb-2: #c9688a; --womb-3: #5b2f72; --womb-ink: #fff7f4;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -40,6 +41,7 @@
     --ok: #6cd59c; --ok-bg: #163222; --mass: #f2c766; --mass-bg: #362a10;
     --heat: #ffa477; --heat-bg: #3d2216; --bad: #ff8a80; --bad-bg: #3e1a18; --info: #c0bbd8; --info-bg: #262139;
     --shadow: 0 6px 24px rgba(0, 0, 0, .35);
+    --womb-1: #b8607a; --womb-2: #6c2f5c; --womb-3: #22122f; --womb-ink: #fff2ef;
     color-scheme: dark;
   }
 }
@@ -78,6 +80,50 @@ p { margin: 0; }
 .tip { background: var(--surface-2); border-radius: var(--r); padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; }
 .tip p { font-size: .95rem; }
 .tip b { display: block; }
+
+
+/* Baby-Karte */
+.baby-card { position: relative; border-radius: 32px; padding: 14px 14px 18px; display: flex; flex-direction: column; gap: 10px;
+  background: radial-gradient(120% 90% at 50% 30%, var(--womb-1) 0%, var(--womb-2) 55%, var(--womb-3) 100%); color: var(--womb-ink); box-shadow: 0 16px 40px rgba(80, 30, 90, .25); overflow: hidden; }
+.stage-wrap { position: relative; width: 100%; max-width: 380px; aspect-ratio: 1 / 1; margin: 0 auto; }
+.stage { position: absolute; inset: 0; cursor: grab; }
+.stage:active { cursor: grabbing; }
+.stage-fallback { position: absolute; inset: 12%; border-radius: 50%; display: grid; place-items: center; font-size: 5rem; background: radial-gradient(circle at 40% 35%, rgba(255,255,255,.35), rgba(255,180,160,.18) 60%, rgba(255,255,255,.05)); }
+.stage-hint { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font-size: .78rem; font-weight: 700; opacity: .6; pointer-events: none; transition: opacity .6s; }
+.week-nav { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; }
+.week-nav .icon-btn { background: rgba(255,255,255,.16); color: var(--womb-ink); box-shadow: none; }
+.week-nav .icon-btn[disabled] { opacity: .3; }
+.wk-label { text-align: center; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.wk-label strong { font-family: var(--f-display); font-size: 1.6rem; letter-spacing: -0.02em; line-height: 1.1; }
+.wk-label .btn.plain { color: var(--womb-ink); opacity: .85; padding: 2px 8px; font-size: .85rem; text-decoration: underline; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stats > div { background: rgba(255,255,255,.13); border-radius: 16px; padding: 10px 14px; min-width: 0; }
+.stats small { display: block; font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; opacity: .78; }
+.stats b { display: block; font-size: 1.2rem; font-variant-numeric: tabular-nums; line-height: 1.25; white-space: nowrap; }
+.stats .fruit { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; }
+.stats .fruit .emo { font-size: 2rem; line-height: 1; }
+.stats .fruit b { white-space: normal; }
+.stats-note { font-size: .74rem; opacity: .7; text-align: center; }
+.due-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.due-big { font-family: var(--f-display); font-weight: 800; font-size: 1.7rem; line-height: 1.1; letter-spacing: -0.02em; }
+.due-date { text-align: right; }
+.due-date small { display: block; color: var(--muted); font-weight: 700; font-size: .8rem; }
+.due-date b { font-size: 1.05rem; }
+.progress { position: relative; height: 12px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.progress i { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--peach-ink), var(--accent)); }
+.tri-mark { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--surface); opacity: .9; }
+.due-legend { display: grid; grid-template-columns: 13fr 14fr 13fr; font-size: .75rem; font-weight: 800; color: var(--muted); }
+.due-legend span:nth-child(2), .due-legend span:nth-child(3) { padding-left: 4px; }
+.hint-sm { color: var(--muted); font-size: .9rem; }
+
+.dev #devText { font-size: 1.02rem; }
+.skills { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+.skill-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.skill-list li { background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: .86rem; padding: 6px 11px; border-radius: 999px; display: inline-flex; gap: 6px; align-items: center; }
+.skill-list li small { font-weight: 700; opacity: .7; }
+.next-skill { color: var(--muted); font-size: .9rem; }
+.next-skill b { color: var(--ink); }
+.scan-hero h2 { font-size: 1.35rem !important; }
 
 /* Listen */
 .list { list-style: none; margin: 0; padding: 0; background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow); overflow: hidden; }
@@ -220,9 +266,54 @@ details p { margin-top: 8px; color: var(--muted); overflow-wrap: anywhere; font-
     <div class="hello">
       <div>
         <small id="greet">Hallo!</small>
-        <h1 class="title">Schwanger-Check</h1>
+        <h1 class="title" id="homeTitle" style="font-size:1.7rem">Schwanger-Check</h1>
       </div>
-      <button class="week-pill" id="weekPill" aria-label="Schwangerschaftswoche ändern">SSW –</button>
+      <button class="week-pill" id="weekPill" aria-label="Termin und Woche ändern">SSW –</button>
+    </div>
+
+    <div class="baby-card">
+      <div class="stage-wrap">
+        <div class="stage" id="stage" role="img" aria-label="3D-Darstellung des Babys"></div>
+        <div class="stage-fallback" id="stageFallback" hidden><span id="fbEmoji">🍋</span></div>
+        <p class="stage-hint" id="stageHint">Zum Drehen wischen</p>
+      </div>
+      <div class="week-nav">
+        <button class="icon-btn" id="wkPrev" aria-label="Vorherige Woche"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <div class="wk-label">
+          <strong id="wkTitle">Woche 12</strong>
+          <button class="btn plain" id="wkToday" hidden>Zurück zu heute</button>
+        </div>
+        <button class="icon-btn" id="wkNext" aria-label="Nächste Woche"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+      <div class="stats">
+        <div><small>Größe</small><b id="stLen">–</b></div>
+        <div><small>Gewicht</small><b id="stWeight">–</b></div>
+        <div class="fruit"><span class="emo" id="stEmoji" aria-hidden="true"></span><div><small>So groß wie</small><b id="stFruit">–</b></div></div>
+      </div>
+      <p class="stats-note">Ungefähre Durchschnittswerte – jedes Baby wächst anders.</p>
+    </div>
+
+    <div class="card due" id="dueCard">
+      <div class="due-top">
+        <div>
+          <p class="label">Bis zum ET</p>
+          <p class="due-big" id="dueLeft">–</p>
+        </div>
+        <div class="due-date"><small>Errechneter Termin</small><b id="dueDate">–</b></div>
+      </div>
+      <div class="progress" role="progressbar" aria-label="Fortschritt der Schwangerschaft" aria-valuemin="0" aria-valuemax="280" id="dueBar"><i id="dueFill"></i><span class="tri-mark" style="left:calc(13 / 40 * 100%)"></span><span class="tri-mark" style="left:calc(27 / 40 * 100%)"></span></div>
+      <div class="due-legend"><span>1. Trimester</span><span>2.</span><span>3.</span></div>
+      <p class="hint-sm" id="dueSub"></p>
+    </div>
+
+    <div class="card dev">
+      <p class="label" id="devLabel">Diese Woche</p>
+      <p id="devText"></p>
+      <div class="skills">
+        <p class="label">Das kann dein Baby schon</p>
+        <ul class="skill-list" id="skills"></ul>
+        <p class="next-skill" id="nextSkill"></p>
+      </div>
     </div>
 
     <div class="scan-hero">
@@ -285,14 +376,16 @@ details p { margin-top: 8px; color: var(--muted); overflow-wrap: anywhere; font-
   <section class="screen" id="s-me" aria-label="Ich" hidden>
     <h1 class="title">Ich</h1>
     <div class="card">
-      <p class="label">Schwangerschaftswoche</p>
+      <p class="label">Errechneter Termin (ET)</p>
+      <input class="input" type="date" id="meDue" aria-label="Errechneter Geburtstermin">
+      <p class="label" style="margin-top:6px">Oder Woche anpassen</p>
       <div class="week-input">
         <button id="meMinus" aria-label="Eine Woche weniger">−</button>
         <output id="meWeek" aria-live="polite">–</output>
         <button id="mePlus" aria-label="Eine Woche mehr">+</button>
       </div>
       <p class="week-sub" id="meTri"></p>
-      <p class="lead" style="font-size:.93rem">Die Woche zählt automatisch weiter. Im ersten Trimester hebt die App Hinweise hervor, die dann besonders wichtig sind.</p>
+      <p class="lead" style="font-size:.93rem">Woche und Countdown rechnen sich jeden Tag automatisch aus dem Termin. Im ersten Trimester hebt die App Hinweise hervor, die dann besonders wichtig sind.</p>
     </div>
     <div class="card">
       <p class="label">So prüft die App</p>
@@ -366,8 +459,11 @@ details p { margin-top: 8px; color: var(--muted); overflow-wrap: anywhere; font-
 
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="engine.js?v=5"></script>
+<script src="engine.js?v=6"></script>
+<script src="weeks.js?v=6"></script>
+<script src="vendor/three.min.js?v=0.149.0" defer></script>
+<script src="baby3d.js?v=6" defer></script>
 <script src="vendor/zxing.min.js?v=0.21.3" defer></script>
-<script src="app.js?v=5" defer></script>
+<script src="app.js?v=6" defer></script>
 </body>
 </html>
