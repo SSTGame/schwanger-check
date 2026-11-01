@@ -85,6 +85,7 @@
     ["Salat aus der Tüte", "Geschnittener Fertigsalat kann Listerien enthalten. Lieber selbst frisch waschen und schneiden."],
     ["Reste", "Gekochtes schnell abkühlen, im Kühlschrank lagern und vor dem Essen wieder richtig heiß machen."],
     ["Tiefkühl-Beeren", "Vor dem Essen erhitzen, zum Beispiel als warmes Kompott."],
+    ["Sojasoße", "Enthält durch die Gärung etwas Alkohol. Sparsam würzen, im heißen Wok verdampft ein Teil davon."],
     ["Obst und Gemüse", "Gründlich waschen, das schützt vor Toxoplasmose."]
   ];
   (function () {
@@ -161,6 +162,12 @@
     [/^en:(camemberts?|bries?|soft-cheeses-with-bloomy-rind|soft-cheeses-with-washed-rind|blue-cheeses|gorgonzolas?|roqueforts?)$/, "weichkäse"],
     [/^en:(liver-sausages|livers|liver-pates|pates-de-foie)/, "leber"],
     [/^en:(liquorices?|licorice-candies)/, "lakritz"],
+    [/^en:(soy-sauces?|soya-sauces?|tamari)$/, "sojasauce"],
+    [/^en:teriyaki-sauces?$/, "teriyaki"],
+    [/^en:kefirs?$/, "kefir"],
+    [/^en:kombuchas?$/, "kombucha"],
+    [/^en:(malt-beverages|malt-drinks|malzbiere?)$/, "malzbier"],
+    [/^en:ginger-beers?$/, "ginger beer"],
     [/^en:(canned-tunas?|tunas?)$/, "thunfisch"],
     [/^en:(coffees|ground-coffees|coffee-beans|instant-coffees|colas)$/, "koffein"]
   ];
@@ -584,6 +591,14 @@
     ["Alkoholfreies Bier", "massvoll", "Darf bis 0,5 % Alkohol enthalten. Besser 0,0 % wählen."],
     ["Tonic Water, Bitter Lemon", "meiden", "Enthält Chinin."],
     ["Lakritz", "massvoll", "Süßholz kann den Blutdruck beeinflussen. Nur gelegentlich."],
+    ["Sojasoße", "massvoll", "Enthält durch die Gärung um 2 % Alkohol. Ein Schuss zum Würzen ist sehr wenig, trotzdem sparsam verwenden."],
+    ["Teriyaki-Soße", "massvoll", "Meist mit Sojasoße, oft auch mit Mirin oder Sake. Zutaten prüfen."],
+    ["Mirin, Sake, Reiswein", "meiden", "Reiswein enthält viel Alkohol, auch als Zutat in Soßen."],
+    ["Kefir", "massvoll", "Kann durch Gärung Spuren von Alkohol enthalten. Aus pasteurisierter Milch sonst unbedenklich."],
+    ["Kombucha", "massvoll", "Gärgetränk mit Restalkohol und Koffein. Besser nur selten."],
+    ["Malzbier, Ginger Beer", "massvoll", "Kann geringe Mengen Restalkohol enthalten."],
+    ["Desserts mit Aroma (enthält Alkohol)", "massvoll", "Alkohol als Trägerstoff für Aromen, die Menge ist sehr gering."],
+    ["Pralinen mit Likör, Schwarzwälder Kirschtorte", "meiden", "Enthalten echten Alkohol, der nicht erhitzt wird."],
     ["Kräutertee", "massvoll", "Sorten abwechseln, nicht große Mengen derselben Sorte."],
     ["Honig", "ok", "Für Schwangere unbedenklich. Tabu ist er nur für Babys unter einem Jahr."],
     ["Nüsse", "ok", "Unbedenklich, außer bei Allergie."]

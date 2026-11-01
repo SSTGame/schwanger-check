@@ -62,5 +62,21 @@ t("Betrieb-Hinweis", "Mehl, Salz. Hergestellt in einem Betrieb, der auch Fisch u
 t("Echter Fisch + Spurenhinweis", "Lachs geräuchert, Salz. Kann Spuren von Senf enthalten.", false, "erhitzen", ["fischroh"]);
 t("Echtes Ei + Spurenhinweis", "Nudeln (Hartweizengrieß, Eier 20%), Wasser. Kann Spuren von Soja enthalten.", true, "ok", ["ei"]);
 
+// Restalkohol
+t("Sojasoße (Kikkoman)", "Sojasauce: Wasser, Sojabohnen, Weizen, Salz", false, "massvoll", ["restalkohol"], ["alkohol"]);
+t("Sojasoße gekocht bleibt Hinweis", "Wasser, Sojabohnen, Weizen, Salz – natürlich gebraute Sojasoße", true, "massvoll", ["restalkohol"]);
+t("Sojasoße mit Alkohol deklariert", "Sojasauce (Wasser, Sojabohnen, Weizen, Salz), Alkohol", false, "meiden", ["alkohol", "restalkohol"]);
+t("Asia-Nudeln mit Sojasauce", "Nudeln (Weizenmehl, Wasser), Gemüse, Sojasauce (Wasser, Sojabohnen, Weizen, Salz), Sesamöl", true, "massvoll", ["restalkohol"]);
+t("Teriyaki mit Mirin", "Sojasauce, Zucker, Mirin, Ingwer", false, "meiden", ["alkohol", "restalkohol"]);
+t("Kefir", "Kefir, 1,5 % Fett, mit Kefirkulturen", false, "massvoll", ["restalkohol"]);
+t("Kombucha", "Kombucha (Wasser, Rohrzucker, Grüntee, Kombuchakultur)", false, "massvoll", ["restalkohol", "koffein"]);
+t("Ginger Beer ≠ Bier", "Wasser, Zucker, Ingwer, Zitronensaft – Ginger Beer", false, "massvoll", ["restalkohol"], ["alkohol"]);
+t("Malzbier ≠ Bier", "Wasser, Gerstenmalz, Zucker, Hopfen – Malzbier", false, "massvoll", ["restalkohol"], ["alkohol"]);
+t("Eis mit Aroma (enthält Alkohol)", "Magermilch, Zucker, Sahne, Aroma (enthält Alkohol), Vanilleschoten", false, "massvoll", ["restalkohol"], ["alkohol"]);
+t("Kuchen: Alkohol als Trägerstoff", "Weizenmehl, Zucker, Eier, Aroma, Alkohol als Trägerstoff", true, "massvoll", ["restalkohol"], ["alkohol"]);
+t("Vanilleextrakt", "Zucker, Butter, Bourbon-Vanilleextrakt", false, "massvoll", ["restalkohol"], ["alkohol"]);
+t("Weinbrandbohnen bleiben meiden", "Zucker, Kakaomasse, Weinbrand (12 %)", false, "meiden", ["alkohol"]);
+t("Sake", "Reis, Wasser, Koji – Sake 15 % vol", false, "meiden", ["alkohol"]);
+
 console.log(`\n${pass} bestanden, ${fail} fehlgeschlagen`);
 process.exit(fail ? 1 : 0);

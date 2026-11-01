@@ -30,8 +30,8 @@
       id: "alkohol", level: "meiden", heatFixes: false,
       label: "Alkohol",
       reason: "In der Schwangerschaft gibt es keine sichere Menge. Beim Kochen und Backen verdampft Alkohol nicht vollständig.",
-      strip: [/alkoholfrei\w*/g, /ohne alkohol/g, /alkohol ?gehalt ?< ?0[,.]5/g, /weinessig/g, /weinsaeure/g, /weinstein/g, /weintraube\w*/g, /weinbeere\w*/g, /bierhefe/g, /rumpsteak/g],
-      test: [/alkohol/, /ethanol/, /\bwein\b/, /rotwein/, /weisswein/, /portwein/, /dessertwein/, /kochwein/, /\bsekt\b/, /prosecco/, /champagner/, /\brum\b/, /weinbrand/, /brandy/, /likoer/, /whiske?y/, /wodka|vodka/, /\bgin\b/, /\w*bier\b/, /marsala/, /cognac/, /schnaps/, /kirschwasser/, /grappa/, /sherry/, /calvados/, /obstbrand/, /spirituose/, /amaretto(?!ini)/]
+      strip: [/alkoholfrei\w*/g, /ohne alkohol/g, /alkohol ?gehalt ?< ?0[,.]5/g, /weinessig/g, /weinsaeure/g, /weinstein/g, /weintraube\w*/g, /weinbeere\w*/g, /bierhefe/g, /rumpsteak/g, /malzbier/g, /ingwerbier/g, /ginger ?beer/g, /aroma\w*\s*\(?\s*(?:enthaelt|mit)\s*(?:ethyl)?alkohol\)?/g, /(?:ethyl)?alkohol als traeger\w*/g, /traeger(?:stoff)?:?\s*\(?(?:ethyl)?alkohol\)?/g, /enthaelt alkohol aus (?:dem )?aroma\w*/g],
+      test: [/alkohol/, /ethanol/, /\bwein\b/, /rotwein/, /weisswein/, /portwein/, /dessertwein/, /kochwein/, /\bsekt\b/, /prosecco/, /champagner/, /\brum\b/, /weinbrand/, /brandy/, /likoer/, /whiske?y/, /wodka|vodka/, /\bgin\b/, /\w*bier\b/, /marsala/, /cognac/, /schnaps/, /kirschwasser/, /grappa/, /sherry/, /calvados/, /obstbrand/, /spirituose/, /amaretto(?!ini)/, /\bmirin\b/, /\bsake\b/, /reiswein/, /shaoxing/]
     },
     {
       id: "chinin", level: "meiden", heatFixes: false,
@@ -107,6 +107,12 @@
       label: "Rohe Sprossen",
       reason: "Rohe Sprossen und Keimlinge können Keime wie Listerien oder EHEC enthalten. Nur gegart essen.",
       test: [/sprossen/, /keimling/]
+    },
+    {
+      id: "restalkohol", level: "massvoll", heatFixes: false,
+      label: "Kann Restalkohol enthalten",
+      reason: "Durch Gärung oder als Trägerstoff für Aroma entstehen kleine Mengen Alkohol, bei Sojasoße zum Beispiel um 2 %. In üblichen Mengen und gekocht ist das sehr wenig. Wer ganz verzichten möchte, würzt sparsam oder wählt Varianten ohne Alkohol.",
+      test: [/soja ?(?:sosse|sauce|sose|wuerze)/, /sojawuerzsauce/, /\bshoyu\b/, /\btamari\b/, /teriyaki/, /\bkefir/, /kombucha/, /ginger ?beer/, /ingwerbier/, /\bkwass\b/, /malzbier/, /malztrunk/, /vanille ?extrakt/, /bourbon ?vanille ?extrakt/, /aroma\w*\s*\(?\s*(?:enthaelt|mit)\s*(?:ethyl)?alkohol/, /alkohol als traeger/, /traeger(?:stoff)?:?\s*\(?(?:ethyl)?alkohol/, /enthaelt alkohol aus/]
     },
     {
       id: "koffein", level: "massvoll", heatFixes: false,
