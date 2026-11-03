@@ -107,7 +107,8 @@
     var w = currentWeek(), d = pregDay();
     var h = new Date().getHours();
     var hi = h < 11 ? "Guten Morgen" : h < 18 ? "Schönen Tag" : "Guten Abend";
-    $("greet").textContent = hi + (w ? " · " + trimester(w) + ". Trimester" : "");
+    var partner = settings.role === "partner";
+    $("greet").textContent = hi + (w ? (partner && settings.momName ? " · " + settings.momName + " ist im " + trimester(w) + ". Trimester" : " · " + trimester(w) + ". Trimester") : "");
     $("homeTitle").textContent = settings.name ? "Hallo " + settings.name : "Schwanger-Check";
     $("meName").value = settings.name || ""; $("meBaby").value = settings.babyName || "";
     $("weekPill").textContent = d != null ? sswText(Math.max(0, d)) : "Termin eintragen";
@@ -131,7 +132,7 @@
     $("fbEmoji").textContent = info.emoji;
     $("devLabel").textContent = (viewWeek && viewWeek !== cw) ? "In Woche " + info.week : "Diese Woche";
     $("devText").textContent = personal(info.text);
-    $("skillsLabel").textContent = "Das kann " + (settings.babyName || "dein Baby") + " schon";
+    $("skillsLabel").textContent = "Das kann " + (settings.babyName || (settings.role === "partner" ? "euer Baby" : "dein Baby")) + " schon";
     $("dueLabel").textContent = settings.babyName ? "Bis " + settings.babyName + " kommt" : "Bis zum ET";
     $("stage").setAttribute("aria-label", "3D-Darstellung von " + (settings.babyName || "deinem Baby") + " in Woche " + info.week);
     var ul = $("skills"); ul.innerHTML = "";
@@ -146,29 +147,79 @@
 
   function renderDue() {
     var d = pregDay();
+    var tri = [[0, 13 * 7], [13 * 7, 27 * 7], [27 * 7, 280]];
+    function setTri(day) { tri.forEach(function (r, i) { var f = day == null ? 0 : Math.max(0, Math.min(1, (day - r[0]) / (r[1] - r[0]))); $("tri" + (i + 1)).style.width = (f * 100) + "%"; }); }
     if (d == null) {
       $("dueLeft").textContent = "Termin eintragen";
-      $("dueDate").textContent = "–";
-      $("dueFill").style.width = "0";
-      $("dueSub").textContent = "Trag deinen errechneten Termin unter „Ich“ ein, dann zählt die App mit.";
+      $("dueDate").textContent = "Unter „Ich“ den ET aus dem Mutterpass eintragen.";
+      $("ringNum").textContent = "–"; $("ringUnit").textContent = "";
+      $("dueFill").style.setProperty("--p", 0); $("dueBar").style.setProperty("--p", 0);
+      $("dueSub").textContent = ""; setTri(null);
       return;
     }
-    var left = 280 - d, due = parseDate(settings.due);
-    $("dueDate").textContent = due.toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" });
-    var txt;
+    var left = 280 - d, due = parseDate(settings.due), txt, partner = settings.role === "partner";
+    $("dueDate").textContent = "ET " + due.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "long", year: "numeric" });
     if (left > 0) {
       var wk = Math.floor(left / 7), dd = left % 7;
       txt = (wk ? wk + (wk === 1 ? " Woche" : " Wochen") : "") + (wk && dd ? " und " : "") + (dd ? dd + (dd === 1 ? " Tag" : " Tage") : "");
-      $("dueSub").textContent = "Tag " + Math.max(0, d) + " von 280 · " + sswText(Math.max(0, d)) + " · noch " + left + (left === 1 ? " Tag" : " Tage") + (settings.babyName ? ", bis du " + settings.babyName + " im Arm hältst" : "");
+      $("dueSub").textContent = settings.babyName ? "Noch " + left + (left === 1 ? " Tag" : " Tage") + ", bis " + (partner ? "ihr " : "du ") + settings.babyName + " im Arm " + (partner ? "haltet" : "hältst") + "." : "";
+      $("ringNum").textContent = String(left); $("ringUnit").textContent = left === 1 ? "Tag" : "Tage";
     } else if (left === 0) {
-      txt = "Heute ist der ET!"; $("dueSub").textContent = "Alles Gute für die Geburt.";
+      txt = "Heute ist der ET!"; $("dueSub").textContent = "Alles Gute für die Geburt."; $("ringNum").textContent = "0"; $("ringUnit").textContent = "Tage";
     } else {
       txt = (-left) + (left === -1 ? " Tag" : " Tage") + " über dem ET"; $("dueSub").textContent = "Ganz normal – nur wenige Babys kommen genau am Termin.";
+      $("ringNum").textContent = "+" + (-left); $("ringUnit").textContent = "Tage";
     }
     $("dueLeft").textContent = txt;
-    var pct = Math.max(0, Math.min(100, d / 280 * 100));
-    $("dueFill").style.width = pct + "%";
+    var p = Math.max(0, Math.min(1, d / 280));
+    $("dueFill").style.setProperty("--p", p);
     $("dueBar").setAttribute("aria-valuenow", String(Math.max(0, Math.min(280, d))));
+    $("dueBar").setAttribute("aria-valuetext", sswText(Math.max(0, d)));
+    setTri(d);
+  }
+
+  // Nächster Termin und Schnellzugriff auf der Startseite
+  function renderNext() {
+    var T = window.SCTools; if (!T) return;
+    var n = T.upcoming(1)[0], card = $("nextCard");
+    if (!n) { card.hidden = true; return; }
+    card.hidden = false;
+    $("nextMon").textContent = n.date.toLocaleDateString("de-DE", { month: "short" }).replace(".", "");
+    $("nextDay").textContent = String(n.date.getDate());
+    var days = Math.round((n.date - today0()) / DAY);
+    $("nextWhen").textContent = n.range ? (days <= 0 ? "Jetzt fällig" : "Ab " + n.from.toLocaleDateString("de-DE", { day: "numeric", month: "short" })) + " · bis " + n.to.toLocaleDateString("de-DE", { day: "numeric", month: "short" })
+      : (days === 0 ? "Heute" : days === 1 ? "Morgen" : "In " + days + " Tagen") + (n.time ? " · " + n.time + " Uhr" : "");
+    $("nextTitle").textContent = n.title;
+  }
+  function renderQuick() {
+    var T = window.SCTools, box = $("quickTools"); if (!T) return;
+    box.innerHTML = "";
+    var d = pregDay(), late = d != null && d >= 28 * 7;
+    var items = late ? [["kicks", "kick", "Tritte"], ["wehen", "timer", "Wehen"], ["lists", "list", "Checklisten"], ["diary", "camera", "Tagebuch"]]
+      : [["termine", "cal", "Termine"], ["diary", "camera", "Tagebuch"], ["lists", "list", "Checklisten"], ["names", "heart", "Namen"]];
+    items.forEach(function (x) { box.appendChild(el("button", { onclick: function () { T.open(x[0]); } }, [el("span", { class: "ico", html: T.icon(x[1]) }), x[2]])); });
+  }
+  function refreshHome() { renderWeek(); renderNext(); renderQuick(); renderRecent(); }
+
+  // Woche-für-Woche-Liste
+  function renderWeekList() {
+    var box = $("weekList"); box.innerHTML = "";
+    var cw = currentWeek();
+    [[1, 4, 13], [2, 14, 27], [3, 28, 42]].forEach(function (t) {
+      box.appendChild(el("h2", { class: "tri-head", text: t[0] + ". Trimester" }));
+      var ul = el("ul", { class: "week-list" });
+      for (var w = t[1]; w <= t[2]; w++) {
+        var info = window.SSW.get(w);
+        (function (w, info) {
+          ul.appendChild(el("li", { class: w === cw ? "cur" : cw && w < cw ? "past" : "", id: "wk-" + w }, [el("button", { onclick: function () { viewWeek = w; renderBaby(); go("home"); } }, [
+            el("span", { class: "wn" }, [String(w), el("small", { text: w === cw ? "JETZT" : "SSW" })]),
+            el("span", { class: "wt" }, [el("b", { text: window.SSW.fmtLen(info.cm) + " · " + (info.g < 1 ? "unter 1 g" : window.SSW.fmtWeight(info.g)) + " · " + info.fruit }), el("span", { text: personal(info.text) })]),
+            el("span", { class: "we", "aria-hidden": "true", text: info.emoji })
+          ])]));
+        })(w, info);
+      }
+      box.appendChild(ul);
+    });
   }
 
   $("weekPill").addEventListener("click", function () { go("me"); });
@@ -218,17 +269,23 @@
   })();
 
   /* ---------- Navigation ---------- */
-  var SCREENS = ["home", "lex", "hist", "me"];
+  var SCREENS = ["home", "week", "tools", "me", "lex", "hist"];
+  var TAB_OF = { lex: "tools", hist: "tools" };
   function go(s) {
     SCREENS.forEach(function (x) { $("s-" + x).hidden = x !== s; });
+    var tab = TAB_OF[s] || s;
     document.querySelectorAll(".tab").forEach(function (t) {
-      if (t.getAttribute("data-s") === s) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
+      if (t.getAttribute("data-s") === tab) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
     });
     if (s === "hist") renderHist();
+    if (s === "home") refreshHome();
+    if (s === "week") { renderWeekList(); setTimeout(function () { var c = $("wk-" + currentWeek()); if (c && c.scrollIntoView) c.scrollIntoView({ block: "center" }); }, 30); }
+    if (s === "tools" && window.SCTools) window.SCTools.renderGrid($("toolGrid"));
     babyRun(s === "home");
-    window.scrollTo(0, 0);
+    if (s !== "week") window.scrollTo(0, 0);
   }
   document.querySelectorAll(".tab").forEach(function (t) { t.addEventListener("click", function () { go(t.getAttribute("data-s")); }); });
+  document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-go]"); if (b) go(b.getAttribute("data-go")); });
 
   /* ---------- Verlauf ---------- */
   function hist() { return store("sc.history") || []; }
@@ -589,6 +646,8 @@
 
   $("heroScan").addEventListener("click", openScanner);
   $("tabScan").addEventListener("click", openScanner);
+  $("lexScan").addEventListener("click", openScanner);
+  $("recentAll").addEventListener("click", function () { go("hist"); });
 
   // Barcode aus Foto
   function photoPick() { $("photoInput").click(); }
@@ -745,13 +804,14 @@
   });
 
   /* ---------- Onboarding ---------- */
-  function onboarding(only) {
+  function onboarding(only, invite) {
     // Schritte: welcome, names, due, scan. "only" zeigt nur die angegebenen Schritte (z. B. nach einem Update).
     var STEPS = only || ["welcome", "names", "due", "scan"];
     var idx = 0, step;
     var layer = $("onb"), ob = $("onbBody");
     layer.hidden = false; document.body.style.overflow = "hidden";
     var ARTS = {
+      invite: '<svg width="120" height="120" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><circle cx="44" cy="44" r="16"/><circle cx="80" cy="50" r="12"/><path d="M16 96c4-18 16-28 28-28s24 10 28 28M70 96c2-12 8-20 18-20s16 8 18 20"/></svg>',
       welcome: '<svg width="120" height="120" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><circle cx="60" cy="60" r="42"/><path d="M40 61l14 14 27-29"/></svg>',
       names: '<svg width="120" height="120" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M60 96S20 72 20 44a20 20 0 0 1 40-6 20 20 0 0 1 40 6c0 28-40 52-40 52z"/></svg>',
       due: '<svg width="120" height="120" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><rect x="24" y="28" width="72" height="68" rx="12"/><path d="M24 48h72M44 20v16M76 20v16"/><path d="M48 70l8 8 16-16"/></svg>',
@@ -760,7 +820,7 @@
     function dots() { return STEPS.length < 2 ? null : el("div", { class: "dots", "aria-hidden": "true" }, STEPS.map(function (x, i) { return el("i", { class: i === idx ? "on" : "" }); })); }
     function next() { idx++; if (idx >= STEPS.length) finish(); else draw(); }
     function finish() {
-      settings.onboarded = true; settings.namesAsked = true; store("sc.settings", settings);
+      settings = store("sc.settings") || settings; settings.onboarded = true; settings.namesAsked = true; store("sc.settings", settings);
       layer.hidden = true; document.body.style.overflow = ""; renderWeek();
     }
     function draw() {
@@ -771,6 +831,22 @@
       if (step === "welcome") {
         content = el("div", { class: "screen", style: "gap:10px" }, [el("h1", { text: "Willkommen!" }), el("p", { text: "Begleite dein Baby Woche für Woche in 3D – und scanne Lebensmittel, um sofort zu sehen, ob sie in der Schwangerschaft unbedenklich sind." })]);
         actions = [el("button", { class: "btn", text: "Los geht’s", onclick: next })];
+      } else if (step === "invite") {
+        var mom = invite.mom || "", bn = invite.baby || "";
+        var me = el("input", { class: "input", id: "invName", autocomplete: "given-name", placeholder: "Dein Vorname", "aria-label": "Dein Vorname", style: "font-size:1.15rem" });
+        me.value = settings.role === "partner" ? (settings.name || "") : "";
+        var dd2 = 280 - Math.round((parseDate(invite.due) - today0()) / DAY);
+        content = el("div", { class: "screen", style: "gap:12px" }, [
+          el("h1", { text: (mom ? mom + " hat dich eingeladen" : "Du wurdest eingeladen") }),
+          el("p", { text: "Ab jetzt siehst du hier jede Woche, wie sich " + (bn || "das Baby") + " entwickelt" + (dd2 >= 0 && dd2 <= 300 ? " – gerade " + sswText(dd2) + "." : ".") + " Wie heißt du?" }),
+          me
+        ]);
+        actions = [el("button", { class: "btn", text: "Übernehmen", onclick: function () {
+            settings.role = "partner"; settings.momName = mom.slice(0, 30); settings.babyName = bn.slice(0, 30);
+            settings.name = me.value.trim().slice(0, 30); settings.namesAsked = true;
+            store("sc.settings", settings); setDue(invite.due); next();
+          } }),
+          el("button", { class: "btn plain", text: "Nicht übernehmen", onclick: function () { layer.hidden = true; document.body.style.overflow = ""; if (!settings.onboarded) onboarding(); } })];
       } else if (step === "names") {
         var nIn = el("input", { class: "input", id: "onbName", autocomplete: "given-name", placeholder: "z. B. Lina", "aria-label": "Dein Vorname", style: "font-size:1.15rem" });
         var bIn = el("input", { class: "input", id: "onbBaby", autocomplete: "off", placeholder: "z. B. Krümel (optional)", "aria-label": "Name oder Spitzname fürs Baby", style: "font-size:1.15rem" });
@@ -811,6 +887,7 @@
       } else {
         content = el("div", { class: "screen", style: "gap:10px" }, [el("h1", { text: "So scannst du" }),
           el("p", { text: "Halte den Barcode in den Rahmen, die App erkennt ihn von selbst. Beim ersten Scan fragt dein Handy nach der Kamera – bitte erlauben." }),
+          el("p", { text: "Unter „Werkzeuge“ findest du Tritte zählen, Wehen-Timer, Termine, Checklisten, Bauch-Tagebuch und mehr." }),
           el("p", { text: "Tipp: Über „Teilen → Zum Home-Bildschirm“ startest du die App wie jede andere." })]);
         actions = [el("button", { class: "btn", text: "Fertig", onclick: next })];
       }
@@ -826,11 +903,23 @@
   // nach Mitternacht neu rechnen
   setInterval(function () { var w = pregDay(); if (w !== lastDay) { lastDay = w; renderWeek(); } }, 60000);
   var lastDay = pregDay();
-  if (!settings.onboarded) onboarding();
+  window.SCApp = { go: go, toast: toast, refreshHome: refreshHome, pause3d: function (p) { babyRun(!p && !$("s-home").hidden && sheet.hidden && $("scanner").hidden); } };
+  if (window.SCTools) {
+    window.SCTools.init();
+    $("openPartner").addEventListener("click", function () { window.SCTools.open("partner"); });
+    $("nextCard").addEventListener("click", function () { window.SCTools.open("termine"); });
+  }
+  renderNext(); renderQuick();
+  var invite = window.SCTools && window.SCTools.readInvite();
+  if (invite) {
+    try { history.replaceState(null, "", location.pathname); } catch (e) {}
+    onboarding(["invite", "scan"], invite);
+  }
+  else if (!settings.onboarded) onboarding();
   else if (!settings.namesAsked) onboarding(["names"]);
   if ("serviceWorker" in navigator && location.protocol === "https:") {
     window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
   }
   // Für Tests
-  window.__sc = { pregDay: pregDay, currentWeek: currentWeek, setDue: setDue, baby: function () { return baby; }, lookup: lookup, validEAN: validEAN, normCode: normCode, fromOFF: fromOFF, evaluate: evaluate, decodeImage: decodeImage, gotCode: gotCode };
+  window.__sc = { go: go, refreshHome: refreshHome, pregDay: pregDay, currentWeek: currentWeek, setDue: setDue, baby: function () { return baby; }, lookup: lookup, validEAN: validEAN, normCode: normCode, fromOFF: fromOFF, evaluate: evaluate, decodeImage: decodeImage, gotCode: gotCode };
 })();
