@@ -333,6 +333,20 @@ p { margin: 0; }
 .contact small { color: var(--muted); font-weight: 700; }
 a.btn { text-decoration: none; }
 
+
+/* Datumsfelder auf dem iPhone nicht breiter als die Karte */
+.input { min-width: 0; max-width: 100%; display: block; }
+input[type="date"].input, input[type="time"].input { -webkit-appearance: none; appearance: none; min-height: 50px; width: 100%; text-align: left; }
+input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value { text-align: left; margin: 0; }
+.row2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+.row2.tight { grid-template-columns: minmax(0, 1fr) auto !important; }
+.card, .ms-grid > div, .stat-row > div { min-width: 0; }
+/* Suchfeld mit x zum Leeren */
+.search-wrap { position: relative; }
+.search-wrap .input { padding-right: 48px; }
+.clear-x { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; border: 0; background: var(--surface-2); color: var(--muted); display: grid; place-items: center; cursor: pointer; }
+input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
+
 /* Listen */
 .list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow); overflow: hidden; }
 .list li + li { border-top: 1px solid var(--line); }
@@ -708,13 +722,13 @@ details p { margin-top: 8px; color: var(--muted); overflow-wrap: anywhere; font-
 
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="engine.js?v=9"></script>
-<script src="weeks.js?v=9"></script>
+<script src="engine.js?v=10"></script>
+<script src="weeks.js?v=10"></script>
 <script src="vendor/three.min.js?v=0.149.0" defer></script>
-<script src="baby3d.js?v=9" defer></script>
-<script src="meds.js?v=9" defer></script>
-<script src="tools.js?v=9" defer></script>
+<script src="baby3d.js?v=10" defer></script>
+<script src="meds.js?v=10" defer></script>
+<script src="tools.js?v=10" defer></script>
 <script src="vendor/zxing.min.js?v=0.21.3" defer></script>
-<script src="app.js?v=9" defer></script>
+<script src="app.js?v=10" defer></script>
 </body>
 </html>

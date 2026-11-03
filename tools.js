@@ -700,16 +700,17 @@
         return;
       }
       hits.forEach(function (e) {
-        results.appendChild(el("li", null, [el("button", { role: "option", onclick: function () { q.value = e.name; show(e); } }, [
+        results.appendChild(el("li", null, [el("button", { role: "option", onclick: function () { q.value = e.name; clearBtn.hidden = false; show(e); } }, [
           el("span", { class: "txt" }, [el("b", { text: e.name }), el("small", { text: !e.slug ? "keine Seite bei Embryotox" : e.name === e.ingredient ? "Wirkstoff" : "→ " + e.ingredient })]),
           el("span", { class: "chev", html: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>' })
         ])]));
       });
     }
     var t;
-    q.addEventListener("input", function () { clearTimeout(t); t = setTimeout(search, 120); });
+    var clearBtn = el("button", { class: "clear-x", type: "button", "aria-label": "Eingabe löschen", hidden: true, html: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>', onclick: function () { clearTimeout(t); q.value = ""; results.innerHTML = ""; detail.innerHTML = ""; clearBtn.hidden = true; q.focus(); } });
+    q.addEventListener("input", function () { clearBtn.hidden = !q.value; clearTimeout(t); t = setTimeout(search, 120); });
     q.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { clearTimeout(t); var first = M.search(q.value, 1)[0]; if (first) { q.value = first.name; show(first); } } });
-    body.appendChild(section("Medikament prüfen", [q, results, detail]));
+    body.appendChild(section("Medikament prüfen", [el("div", { class: "search-wrap" }, [q, clearBtn]), results, detail]));
 
     if (mine.length) {
       var ul = el("ul", { class: "med-list" });
