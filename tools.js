@@ -61,7 +61,10 @@
     food: '<path d="M7 3v8a2 2 0 0 0 2 2v8M7 3v5M11 3v5M7 8h4M17 3c-2 0-3 2-3 5s1 5 3 5v8"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     trash: '<path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/>',
-    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>'
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    pill: '<rect x="3.5" y="9" width="17" height="7" rx="3.5" transform="rotate(-35 12 12.5)"/><path d="M9.6 7.7l4.8 7"/>',
+    ext: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+    phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/>'
   };
   function icon(name, size) { return '<svg width="' + (size || 22) + '" height="' + (size || 22) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + I[name] + '</svg>'; }
 
@@ -646,8 +649,99 @@
     return null;
   }
 
+
+  /* =========================================================
+     10) Medikamente – Verknüpfung mit Embryotox
+     ========================================================= */
+  var MED_STATUS = [["offen", "Noch klären"], ["ok", "Geeignet laut Embryotox"], ["eing", "Mit Einschränkung"], ["nein", "Nicht empfohlen"], ["arzt", "Mit Ärztin besprochen"]];
+  function medLink(slug, label, cls) {
+    return el("a", { class: cls || "btn", href: root.SCMeds.url(slug), target: "_blank", rel: "noopener", html: icon("ext", 18) + "<span>" + (label || "Bei Embryotox nachlesen") + "</span>" });
+  }
+  function renderMeds(body) {
+    var M = root.SCMeds;
+    var mine = load("sc.meds", []); // {id, name, slug, ingredient, status, note}
+    body.appendChild(note("Die App bewertet keine Medikamente. Sie bringt dich direkt zur passenden Seite von Embryotox – dem unabhängigen Beratungszentrum der Charité für Arzneimittel in Schwangerschaft und Stillzeit.", "info"));
+
+    var q = el("input", { class: "input search-in", id: "medQ", type: "search", autocomplete: "off", placeholder: "Medikament oder Wirkstoff, z. B. Ibuflam", "aria-label": "Medikament suchen" });
+    var results = el("ul", { class: "med-results", role: "listbox", "aria-label": "Treffer" });
+    var detail = el("div");
+    function addToList(e) {
+      if (mine.some(function (m) { return m.slug === e.slug && m.name === e.name; })) { toast(e.name + " steht schon auf deiner Liste"); return; }
+      mine.unshift({ id: uid(), name: e.name, slug: e.slug, ingredient: e.ingredient, status: "offen", note: "" });
+      save("sc.meds", mine); toast(e.name + " gespeichert"); rerender();
+    }
+    function show(e) {
+      results.innerHTML = ""; detail.innerHTML = "";
+      if (!e.slug) {
+        detail.appendChild(section(e.name, [
+          el("p", { text: "Zu „" + e.name + "“ hat Embryotox keine eigene Seite. Vitamine, Mineralstoffe und Nahrungsergänzungsmittel bewertet Embryotox nicht." }),
+          note("Frag dazu deine Frauenärztin, Hebamme oder Apotheke.")
+        ]));
+        return;
+      }
+      var isIng = e.name === e.ingredient;
+      detail.appendChild(section(null, [
+        el("div", { class: "med-head" }, [el("span", { class: "ico", html: icon("pill") }), el("div", null, [el("b", { text: e.name }), el("small", { text: isIng ? "Wirkstoff" : "Wirkstoff: " + e.ingredient })])]),
+        medLink(e.slug, "Bei Embryotox nachlesen"),
+        el("button", { class: "btn soft", html: icon("plus", 18) + "<span>Auf meine Liste</span>", onclick: function () { addToList(e); } }),
+        note("Bei Embryotox steht, wie gut der Wirkstoff in der Schwangerschaft untersucht ist und ob er als Mittel der Wahl gilt. Kombipräparate enthalten mehrere Wirkstoffe – prüfe dann jeden einzeln.")
+      ]));
+    }
+    function search() {
+      var v = q.value; results.innerHTML = ""; detail.innerHTML = "";
+      if (!v.trim()) return;
+      var hits = M.search(v, 8);
+      if (!hits.length) {
+        detail.appendChild(section(null, [
+          el("p", { text: "Kein Treffer für „" + v.trim() + "“. Embryotox führt rund " + M.count + " Wirkstoffe und viele Handelsnamen." }),
+          note("Tipp: Auf der Packung oder im Beipackzettel steht der Wirkstoff, zum Beispiel „Wirkstoff: Ibuprofen“. Such nach diesem Namen."),
+          medLink(null, "Embryotox-Liste von A bis Z öffnen", "btn soft")
+        ]));
+        return;
+      }
+      hits.forEach(function (e) {
+        results.appendChild(el("li", null, [el("button", { role: "option", onclick: function () { q.value = e.name; show(e); } }, [
+          el("span", { class: "txt" }, [el("b", { text: e.name }), el("small", { text: !e.slug ? "keine Seite bei Embryotox" : e.name === e.ingredient ? "Wirkstoff" : "→ " + e.ingredient })]),
+          el("span", { class: "chev", html: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>' })
+        ])]));
+      });
+    }
+    var t;
+    q.addEventListener("input", function () { clearTimeout(t); t = setTimeout(search, 120); });
+    q.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { clearTimeout(t); var first = M.search(q.value, 1)[0]; if (first) { q.value = first.name; show(first); } } });
+    body.appendChild(section("Medikament prüfen", [q, results, detail]));
+
+    if (mine.length) {
+      var ul = el("ul", { class: "med-list" });
+      mine.forEach(function (m) {
+        var sel = el("select", { class: "input sel", "aria-label": "Status für " + m.name, id: "ms-" + m.id });
+        MED_STATUS.forEach(function (st) { var o = el("option", { value: st[0], text: st[1] }); if (m.status === st[0]) o.selected = true; sel.appendChild(o); });
+        sel.addEventListener("change", function () { m.status = sel.value; save("sc.meds", mine); li.className = "st-" + m.status; });
+        var nt = el("input", { class: "input", id: "mn-" + m.id, placeholder: "Notiz, z. B. Dosis oder was die Ärztin gesagt hat", maxlength: "160", "aria-label": "Notiz zu " + m.name });
+        nt.value = m.note || "";
+        nt.addEventListener("change", function () { m.note = nt.value.trim(); save("sc.meds", mine); toast("Notiz gespeichert"); });
+        var li = el("li", { class: "st-" + m.status }, [
+          el("div", { class: "med-head" }, [el("span", { class: "ico", html: icon("pill") }), el("div", null, [el("b", { text: m.name }), el("small", { text: m.slug ? (m.name === m.ingredient ? "Wirkstoff" : "Wirkstoff: " + m.ingredient) : "ohne Embryotox-Seite" })]),
+            el("button", { class: "icon-btn sm", "aria-label": m.name + " entfernen", html: icon("trash", 18), onclick: function () { save("sc.meds", mine.filter(function (x) { return x.id !== m.id; })); rerender(); } })]),
+          sel, nt,
+          m.slug ? medLink(m.slug, "Embryotox-Seite öffnen", "link-ext") : null
+        ]);
+        ul.appendChild(li);
+      });
+      body.appendChild(section("Meine Medikamente", [ul, note("Den Status trägst du selbst ein – zum Beispiel nach dem Lesen bei Embryotox oder dem Gespräch in der Praxis. Nimm die Liste zu Terminen mit.")]));
+    }
+
+    body.appendChild(section("Persönliche Beratung bei Embryotox", [
+      el("p", { text: "Kostenlos und unabhängig. Am besten vorher den Online-Fragebogen ausfüllen, dann ruft Embryotox zurück." }),
+      el("div", { class: "contact" }, [el("span", { class: "ico", html: icon("phone") }), el("div", null, [el("b", { class: "sel-text", text: M.PHONE }), el("small", { text: M.HOURS })])]),
+      el("a", { class: "btn soft", href: M.CONSULT, target: "_blank", rel: "noopener", html: icon("ext", 18) + "<span>Zum Beratungs-Fragebogen</span>" })
+    ]));
+    body.appendChild(note("Setze verordnete Medikamente nie eigenmächtig ab – sprich vorher mit deiner Ärztin. Bei einer Vergiftung oder Überdosis: Giftnotruf Berlin 030 19240, im Notfall 112.", "warn"));
+  }
+
   /* ---------- Verzeichnis ---------- */
   var TOOLS = {
+    meds: { title: "Medikamente", icon: "pill", sub: "Mit Embryotox prüfen", render: renderMeds },
     kicks: { title: "Tritte zählen", icon: "kick", sub: "Kindsbewegungen", render: renderKicks },
     wehen: { title: "Wehen-Timer", icon: "timer", sub: "Dauer & Abstand", render: renderContractions },
     termine: { title: "Termine & Vorsorge", icon: "cal", sub: "Mutterpass-Plan", render: renderAppointments },
@@ -669,9 +763,9 @@
       if (k === "kicks") { var a = load("sc.kicks", {}).active; if (a) badge = el("span", { class: "live", text: "läuft" }); }
       if (k === "wehen") { var w = load("sc.contractions", {}).active; if (w) badge = el("span", { class: "live", text: "läuft" }); }
       if (k === "lists") { var p1 = listProgress("tasche"), p2 = listProgress("papiere"); badge = el("span", { class: "count", text: (p1.done + p2.done) + "/" + (p1.total + p2.total) }); }
-      var wide = k === "partner";
+      var wide = k === "partner" || k === "meds";
       grid.appendChild(el("button", { class: "tool-tile" + (wide ? " wide" : ""), onclick: function () { openTool(k); } }, wide
-        ? [el("span", { class: "ico", html: icon(t.icon) }), el("span", null, [el("b", { text: t.title }), el("small", { text: "Partner und Familie sehen euren Termin und jede Woche" })])]
+        ? [el("span", { class: "ico", html: icon(t.icon) }), el("span", null, [el("b", { text: t.title }), el("small", { text: k === "meds" ? "Darf ich das nehmen? Direkt zur Wirkstoffseite bei Embryotox" : "Partner und Familie sehen euren Termin und jede Woche" })])]
         : [el("span", { class: "ico", html: icon(t.icon) }), el("b", { text: t.title }), el("small", { text: t.sub }), badge]));
     });
     container.appendChild(grid);

@@ -308,6 +308,31 @@ p { margin: 0; }
 .idea-chips .chip-btn { margin: 0; }
 .seg.three { grid-template-columns: repeat(3, 1fr); }
 
+
+/* Medikamente */
+.med-results { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.med-results li + li { border-top: 1px solid var(--line); }
+.med-results button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 11px 2px; background: none; border: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.med-results .txt { flex: 1; min-width: 0; }
+.med-results .txt b { display: block; }
+.med-results .txt small { color: var(--muted); }
+.med-head { display: flex; align-items: center; gap: 12px; }
+.med-head > div { flex: 1; min-width: 0; }
+.med-head b { display: block; font-size: 1.1rem; overflow-wrap: anywhere; }
+.med-head small { color: var(--muted); font-weight: 700; }
+.med-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.med-list li { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 16px; background: var(--surface-2); border-left: 4px solid var(--line); }
+.med-list li.st-ok, .med-list li.st-arzt { border-left-color: var(--ok); }
+.med-list li.st-eing { border-left-color: var(--mass); }
+.med-list li.st-nein { border-left-color: var(--bad); }
+.med-list .input { background: var(--surface); }
+.sel { appearance: auto; font-weight: 700; }
+.link-ext { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 800; text-decoration: none; }
+.contact { display: flex; align-items: center; gap: 12px; }
+.contact b { display: block; font-size: 1.15rem; font-variant-numeric: tabular-nums; user-select: all; }
+.contact small { color: var(--muted); font-weight: 700; }
+a.btn { text-decoration: none; }
+
 /* Listen */
 .list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow); overflow: hidden; }
 .list li + li { border-top: 1px solid var(--line); }
@@ -683,12 +708,13 @@ details p { margin-top: 8px; color: var(--muted); overflow-wrap: anywhere; font-
 
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="engine.js?v=8"></script>
-<script src="weeks.js?v=8"></script>
+<script src="engine.js?v=9"></script>
+<script src="weeks.js?v=9"></script>
 <script src="vendor/three.min.js?v=0.149.0" defer></script>
-<script src="baby3d.js?v=8" defer></script>
-<script src="tools.js?v=8" defer></script>
+<script src="baby3d.js?v=9" defer></script>
+<script src="meds.js?v=9" defer></script>
+<script src="tools.js?v=9" defer></script>
 <script src="vendor/zxing.min.js?v=0.21.3" defer></script>
-<script src="app.js?v=8" defer></script>
+<script src="app.js?v=9" defer></script>
 </body>
 </html>

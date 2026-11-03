@@ -195,8 +195,8 @@
     var T = window.SCTools, box = $("quickTools"); if (!T) return;
     box.innerHTML = "";
     var d = pregDay(), late = d != null && d >= 28 * 7;
-    var items = late ? [["kicks", "kick", "Tritte"], ["wehen", "timer", "Wehen"], ["lists", "list", "Checklisten"], ["diary", "camera", "Tagebuch"]]
-      : [["termine", "cal", "Termine"], ["diary", "camera", "Tagebuch"], ["lists", "list", "Checklisten"], ["names", "heart", "Namen"]];
+    var items = late ? [["kicks", "kick", "Tritte"], ["wehen", "timer", "Wehen"], ["meds", "pill", "Medikamente"], ["lists", "list", "Checklisten"]]
+      : [["termine", "cal", "Termine"], ["meds", "pill", "Medikamente"], ["diary", "camera", "Tagebuch"], ["lists", "list", "Checklisten"]];
     items.forEach(function (x) { box.appendChild(el("button", { onclick: function () { T.open(x[0]); } }, [el("span", { class: "ico", html: T.icon(x[1]) }), x[2]])); });
   }
   function refreshHome() { renderWeek(); renderNext(); renderQuick(); renderRecent(); }
