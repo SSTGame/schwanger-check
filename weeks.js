@@ -4,7 +4,7 @@
   "use strict";
   // [SSW, Länge cm, Gewicht g, Vergleich, Emoji, Entwicklung]
   var W = [
-    [4, 0.1, 0, "ein Mohnsamen", "⚫", "Der Keim hat sich eingenistet. Die Fruchtblase und der Dottersack entstehen und versorgen ihn in den ersten Wochen."],
+    [4, 0.1, 0, "ein Salzkorn", "🧂", "Der Keim hat sich eingenistet. Die Fruchtblase und der Dottersack entstehen und versorgen ihn in den ersten Wochen."],
     [5, 0.2, 0, "ein Reiskorn", "🍚", "Das Neuralrohr bildet sich, daraus werden Gehirn und Rückenmark. Ein winziges Herz beginnt sich anzulegen."],
     [6, 0.5, 0, "eine Linse", "🫘", "Das Herz schlägt – im Ultraschall oft schon als Flackern zu sehen. Arme und Beine zeigen sich als kleine Knospen."],
     [7, 1.0, 1, "eine Heidelbeere", "🫐", "Das Gehirn wächst schnell. Augen, Nase und Mund legen sich an, Hände und Füße sehen noch aus wie kleine Paddel."],
